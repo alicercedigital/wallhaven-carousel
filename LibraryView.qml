@@ -11,17 +11,122 @@ FocusScope {
     property string screenName: ""
 
     readonly property int cardW: 250
-    readonly property int cardH: 380
+    // Encolhe quando a barra de filtros come altura, para o card grande não
+    // passar por cima do rodapé.
+    readonly property int cardH: Math.max(220, Math.min(380, Math.floor(list.height / 1.25)))
     readonly property real skew: -0.28
     readonly property real skewPad: Math.abs(skew) * cardH / 2
 
     property string searchText: ""
     property bool searching: false
     property bool favoritesOnly: false
+    property bool filtersOpen: false
+    property string colorFilter: ""
+    property string tagFilter: ""
+    readonly property bool anyFilter: favoritesOnly || colorFilter !== "" || tagFilter !== "" || searchText.trim() !== ""
     property string confirmName: ""
     property string pendingSelect: ""
     property var entries: []
     readonly property var current: (list.currentIndex >= 0 && list.currentIndex < entries.length) ? entries[list.currentIndex] : null
+    readonly property var colorDefs: [
+        {
+            key: "red",
+            label: "vermelho",
+            hex: "#E5484D"
+        },
+        {
+            key: "orange",
+            label: "laranja",
+            hex: "#F76B15"
+        },
+        {
+            key: "yellow",
+            label: "amarelo",
+            hex: "#FFC53D"
+        },
+        {
+            key: "green",
+            label: "verde",
+            hex: "#30A46C"
+        },
+        {
+            key: "teal",
+            label: "turquesa",
+            hex: "#12A594"
+        },
+        {
+            key: "blue",
+            label: "azul",
+            hex: "#3E63DD"
+        },
+        {
+            key: "purple",
+            label: "roxo",
+            hex: "#8E4EC6"
+        },
+        {
+            key: "pink",
+            label: "rosa",
+            hex: "#E93D82"
+        },
+        {
+            key: "dark",
+            label: "escuro",
+            hex: "#1C1C1F"
+        },
+        {
+            key: "light",
+            label: "claro",
+            hex: "#F0F0F0"
+        },
+        {
+            key: "gray",
+            label: "cinza",
+            hex: "#8B8D98"
+        }
+    ]
+
+    readonly property var colorCounts: {
+        const c = {};
+        for (const n of hub.names)
+            for (const k of (hub.colors[n] || []))
+                c[k] = (c[k] || 0) + 1;
+        return c;
+    }
+
+    readonly property var topTags: {
+        const c = {};
+        for (const n of hub.names)
+            for (const t of (hub.tags[n] || []))
+                c[t] = (c[t] || 0) + 1;
+        return Object.keys(c).sort((a, b) => c[b] - c[a] || a.localeCompare(b)).slice(0, 8).map(t => ({
+                    tag: t,
+                    count: c[t]
+                }));
+    }
+
+    // Percorre "sem filtro" e as opções, para filtrar só pelo teclado.
+    function cycle(options, current, step) {
+        const i = options.indexOf(current);
+        return options[(i + step + options.length) % options.length];
+    }
+
+    function cycleColor(step) {
+        filtersOpen = true;
+        colorFilter = cycle([""].concat(colorDefs.map(c => c.key)), colorFilter, step);
+    }
+
+    function cycleTag() {
+        filtersOpen = true;
+        tagFilter = cycle([""].concat(topTags.map(t => t.tag)), tagFilter, 1);
+    }
+
+    function clearFilters() {
+        colorFilter = "";
+        tagFilter = "";
+        favoritesOnly = false;
+    }
+
     readonly property bool currentIsFavorite: !!current && !!hub.favoriteSet[current.name]
 
     function focusList() {
@@ -34,7 +139,8 @@ FocusScope {
         searchText = "";
         searchBox.text = "";
         confirmName = "";
-        favoritesOnly = false;
+        clearFilters();
+        filtersOpen = false;
         pendingSelect = hub.currentName;
         rebuild();
     }
@@ -82,7 +188,12 @@ FocusScope {
         for (const n of hub.names) {
             if (favoritesOnly && !hub.favoriteSet[n])
                 continue;
-            if (q && n.toLowerCase().indexOf(q) < 0)
+            const nTags = hub.tags[n] || [];
+            if (colorFilter && (hub.colors[n] || []).indexOf(colorFilter) < 0)
+                continue;
+            if (tagFilter && nTags.indexOf(tagFilter) < 0)
+                continue;
+            if (q && n.toLowerCase().indexOf(q) < 0 && !nTags.some(t => t.toLowerCase().indexOf(q) >= 0))
                 continue;
             out.push({
                 name: n
@@ -105,6 +216,8 @@ FocusScope {
 
     onSearchTextChanged: rebuild()
     onFavoritesOnlyChanged: rebuild()
+    onColorFilterChanged: rebuild()
+    onTagFilterChanged: rebuild()
 
     Connections {
         target: view.hub
@@ -113,6 +226,14 @@ FocusScope {
         }
         function onFavoritesChanged() {
             if (view.favoritesOnly)
+                view.rebuild();
+        }
+        function onColorsChanged() {
+            if (view.colorFilter)
+                view.rebuild();
+        }
+        function onTagsChanged() {
+            if (view.tagFilter || view.searchText)
                 view.rebuild();
         }
         function onDownloaded(name) {
@@ -182,7 +303,7 @@ FocusScope {
                 font.weight: Font.Bold
             }
             StyledText {
-                text: view.hub.names.length + " na pasta · " + view.hub.favoriteCount + " favoritos"
+                text: (view.anyFilter ? view.entries.length + " de " : "") + view.hub.names.length + " na pasta · " + view.hub.favoriteCount + " favoritos"
                 color: "#F2F2F2"
                 opacity: 0.6
                 font.pixelSize: Theme.fontSizeSmall
@@ -209,6 +330,16 @@ FocusScope {
                 icon: "search"
                 active: view.searching
                 onClicked: view.searching ? view.closeSearch() : view.openSearch()
+            }
+            HubButton {
+                icon: "palette"
+                label: "Filtros"
+                hint: "C"
+                active: view.filtersOpen || view.colorFilter !== "" || view.tagFilter !== ""
+                onClicked: {
+                    view.filtersOpen = !view.filtersOpen;
+                    list.forceActiveFocus();
+                }
             }
             HubButton {
                 icon: "star"
@@ -242,12 +373,130 @@ FocusScope {
         }
     }
 
+    // ── Filtros: cor e etiqueta ───────────────────────────────────────────
+    Item {
+        id: filterBar
+        anchors.top: topBar.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.leftMargin: 32
+        anchors.rightMargin: 32
+        height: view.filtersOpen ? filterFlow.implicitHeight + 12 : 0
+        clip: true
+
+        Behavior on height {
+            NumberAnimation {
+                duration: 150
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+        }
+
+        Flow {
+            id: filterFlow
+            width: parent.width
+            spacing: 8
+
+            Repeater {
+                model: view.colorDefs
+                delegate: Rectangle {
+                    id: dot
+                    required property var modelData
+                    readonly property int count: view.colorCounts[modelData.key] || 0
+                    readonly property bool picked: view.colorFilter === modelData.key
+                    width: 32
+                    height: 32
+                    radius: 16
+                    color: modelData.hex
+                    opacity: count === 0 && !picked ? 0.25 : 1
+                    border.width: picked ? 3 : 1
+                    border.color: picked ? "#FFFFFF" : Qt.rgba(1, 1, 1, 0.3)
+                    scale: dotMouse.containsMouse || picked ? 1.12 : 1
+
+                    Behavior on scale {
+                        NumberAnimation {
+                            duration: 120
+                        }
+                    }
+
+                    MouseArea {
+                        id: dotMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            view.colorFilter = dot.picked ? "" : dot.modelData.key;
+                            list.forceActiveFocus();
+                        }
+                    }
+                }
+            }
+
+            StyledText {
+                height: 32
+                verticalAlignment: Text.AlignVCenter
+                leftPadding: 4
+                rightPadding: 12
+                color: "#F2F2F2"
+                opacity: 0.7
+                font.pixelSize: Theme.fontSizeSmall
+                text: {
+                    if (view.colorFilter) {
+                        const d = view.colorDefs.find(c => c.key === view.colorFilter);
+                        return d.label + " · " + (view.colorCounts[d.key] || 0);
+                    }
+                    return view.hub.analyzing ? "analisando as cores…" : Object.keys(view.hub.colors).length === 0 ? "" : "cor";
+                }
+            }
+
+            Repeater {
+                model: view.topTags
+                delegate: HubButton {
+                    required property var modelData
+                    implicitHeight: 32
+                    label: modelData.tag
+                    hint: String(modelData.count)
+                    active: view.tagFilter === modelData.tag
+                    onClicked: {
+                        view.tagFilter = view.tagFilter === modelData.tag ? "" : modelData.tag;
+                        list.forceActiveFocus();
+                    }
+                }
+            }
+
+            StyledText {
+                visible: view.topTags.length === 0
+                height: 32
+                verticalAlignment: Text.AlignVCenter
+                leftPadding: 12
+                color: "#F2F2F2"
+                opacity: 0.45
+                font.pixelSize: Theme.fontSizeSmall
+                text: "Etiquetas aparecem para o que vem do Wallhaven."
+            }
+
+            HubButton {
+                visible: view.colorFilter !== "" || view.tagFilter !== ""
+                implicitHeight: 32
+                icon: "close"
+                label: "Limpar"
+                onClicked: {
+                    view.colorFilter = "";
+                    view.tagFilter = "";
+                    list.forceActiveFocus();
+                }
+            }
+        }
+    }
+
     // ── Carrossel ─────────────────────────────────────────────────────────
     ListView {
         id: list
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.top: topBar.bottom
+        anchors.top: filterBar.bottom
         anchors.bottom: bottomBar.top
         orientation: ListView.Horizontal
         spacing: 10
@@ -325,12 +574,26 @@ FocusScope {
             case Qt.Key_R:
                 view.hub.setFavoritesRandom(!view.hub.favoritesRandom);
                 break;
+            case Qt.Key_C:
+                view.filtersOpen = !view.filtersOpen;
+                break;
+            case Qt.Key_Comma:
+                view.cycleColor(-1);
+                break;
+            case Qt.Key_Period:
+                view.cycleColor(1);
+                break;
+            case Qt.Key_T:
+                view.cycleTag();
+                break;
             case Qt.Key_A:
                 view.hub.showDiscover();
                 break;
             case Qt.Key_Escape:
                 if (view.searchText !== "" || view.searching)
                     view.closeSearch();
+                else if (view.colorFilter !== "" || view.tagFilter !== "")
+                    view.clearFilters();
                 else
                     view.hub.close();
                 break;
@@ -482,7 +745,7 @@ FocusScope {
         color: "#F2F2F2"
         opacity: 0.7
         font.pixelSize: Theme.fontSizeLarge
-        text: view.favoritesOnly ? "Nenhum favorito ainda. Aperte F sobre um wallpaper." : view.searchText !== "" ? "Nada com esse nome." : "A pasta está vazia. Aperte A para baixar do Wallhaven."
+        text: view.favoritesOnly && view.colorFilter === "" && view.tagFilter === "" ? "Nenhum favorito ainda. Aperte F sobre um wallpaper." : view.anyFilter ? "Nada com esses filtros." : "A pasta está vazia. Aperte A para baixar do Wallhaven."
     }
 
     // ── Barra de baixo ────────────────────────────────────────────────────
@@ -572,7 +835,7 @@ FocusScope {
         StyledText {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
-            text: "← → navegar    Enter usar    F favorito    Del excluir    / filtrar    Tab só favoritos    R aleatório dos favoritos    A adicionar    Esc fechar"
+            text: "← → navegar    Enter usar    F favorito    Del excluir    / buscar    C filtros (, . cor  T etiqueta)    Tab só favoritos    R aleatório dos favoritos    A adicionar    Esc fechar"
             color: "#F2F2F2"
             opacity: 0.4
             font.pixelSize: Theme.fontSizeSmall

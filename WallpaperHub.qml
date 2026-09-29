@@ -79,6 +79,8 @@ PluginComponent {
             return;
         names = out;
         nameSet = set;
+        analyzeTimer.restart();
+        tagTimer.restart();
     }
 
     // ── Favoritos ─────────────────────────────────────────────────────────
@@ -105,7 +107,10 @@ PluginComponent {
             favorites = arr;
     }
 
-    onPluginDataChanged: loadFavorites()
+    onPluginDataChanged: {
+        loadFavorites();
+        loadTags();
+    }
 
     function saveFavorites(arr) {
         favorites = arr;
@@ -121,6 +126,110 @@ PluginComponent {
 
     function toggleFavorite(name) {
         setFavorite(name, !favoriteSet[name]);
+    }
+
+    // ── Cores e etiquetas (para filtrar) ──────────────────────────────────
+    // As cores saem da própria imagem (colors.py, com cache em ~/.local/state);
+    // as etiquetas vêm do Wallhaven, só para o que foi baixado de lá.
+    property var colors: ({})
+    property bool analyzing: false
+    property bool analyzeAgain: false
+    readonly property string colorCache: stripFile(Paths.state) + "/wallpaperHub/colors.json"
+
+    Timer {
+        id: analyzeTimer
+        interval: 2000
+        onTriggered: root.analyzeColors()
+    }
+
+    function analyzeColors() {
+        const dir = pluginService ? pluginService.getPluginPath(pluginId) : "";
+        if (!dir || names.length === 0)
+            return;
+        if (analyzing) {
+            analyzeAgain = true;
+            return;
+        }
+        analyzing = true;
+        analyzeAgain = false;
+        Proc.runCommand("wallpaperHub.colors", ["nice", "-n", "10", "python3", dir + "/colors.py", folder, colorCache], (out, code) => {
+            root.analyzing = false;
+            if (code === 0) {
+                try {
+                    root.colors = JSON.parse(out);
+                } catch (e) {
+                    console.warn("wallpaperHub: colors.py devolveu algo que não é JSON");
+                }
+            }
+            if (root.analyzeAgain)
+                analyzeTimer.restart();
+        }, 0, 600000, root);
+    }
+
+    property var tags: ({})
+
+    function loadTags() {
+        const v = pluginData?.tags;
+        const t = v ? JSON.parse(JSON.stringify(v)) : {};
+        if (JSON.stringify(t) !== JSON.stringify(tags))
+            tags = t;
+    }
+
+    function setTags(name, list) {
+        const t = Object.assign({}, tags);
+        if (list === null)
+            delete t[name];
+        else
+            t[name] = list;
+        tags = t;
+        saveData("tags", t);
+    }
+
+    property var tagQueue: []
+    property bool tagBusy: false
+
+    Timer {
+        id: tagTimer
+        interval: 3000
+        onTriggered: root.queueTags()
+    }
+
+    Timer {
+        id: tagNext
+        interval: 1500
+        onTriggered: root.nextTag()
+    }
+
+    // O nome wallhaven-<id>.<ext> diz de onde veio; busca as etiquetas que faltam.
+    function queueTags() {
+        const q = [];
+        for (const n of names) {
+            const m = /^wallhaven-([a-z0-9]+)\./i.exec(n);
+            if (m && tags[n] === undefined)
+                q.push({
+                    name: n,
+                    wid: m[1]
+                });
+        }
+        tagQueue = q;
+        nextTag();
+    }
+
+    function nextTag() {
+        if (tagBusy || tagQueue.length === 0)
+            return;
+        tagBusy = true;
+        const it = tagQueue[0];
+        tagQueue = tagQueue.slice(1);
+        Proc.runCommand("wallpaperHub.tags", ["curl", "-fsSL", "--connect-timeout", "10", "--max-time", "30", "-A", "wallpaperHub/0.1", "https://wallhaven.cc/api/v1/w/" + it.wid], (out, code) => {
+            root.tagBusy = false;
+            if (code === 0) {
+                try {
+                    root.setTags(it.name, JSON.parse(out).data.tags.map(t => t.name).slice(0, 12));
+                } catch (e) {}
+            }
+            tagNext.restart();
+        }, 0, 40000, root);
     }
 
     // ── Aplicar, excluir ──────────────────────────────────────────────────
@@ -151,6 +260,8 @@ PluginComponent {
                 return;
             }
             setFavorite(name, false);
+            if (tags[name] !== undefined)
+                setTags(name, null);
             scanTimer.restart();
             ToastService?.showInfo("Na lixeira: " + name);
         }, 0, 15000, root);
@@ -400,6 +511,7 @@ PluginComponent {
 
     Component.onCompleted: {
         loadFavorites();
+        loadTags();
         scanTimer.restart();
         console.info("wallpaperHub: pronto (dms ipc call wallpaperHub toggle)");
     }

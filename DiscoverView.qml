@@ -110,6 +110,7 @@ FocusScope {
         const mine = ++serial;
         const next = page + 1;
         loading = true;
+        errorText = "";
         Proc.runCommand("wallpaperHub.search", curl(url(next)), (out, code) => {
             if (mine !== view.serial)
                 return;
@@ -395,11 +396,39 @@ FocusScope {
         keyNavigationEnabled: true
         highlightMoveDuration: 0
 
+        footer: Item {
+            width: grid.width
+            height: view.page < view.lastPage || view.errorText !== "" ? 96 : 24
+
+            Column {
+                visible: view.page < view.lastPage || view.errorText !== ""
+                anchors.centerIn: parent
+                spacing: 8
+
+                StyledText {
+                    visible: view.errorText !== "" && results.count > 0
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: view.errorText
+                    color: "#FFB4AB"
+                    font.pixelSize: Theme.fontSizeSmall
+                }
+                HubButton {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    icon: view.errorText !== "" ? "refresh" : "expand_more"
+                    label: view.loading ? "Carregando…" : view.errorText !== "" ? "Tentar de novo" : "Carregar mais"
+                    busy: view.loading
+                    onClicked: view.loadMore()
+                }
+            }
+        }
+
         readonly property int cols: Math.max(1, Math.round(width / 230))
         cellWidth: Math.floor(width / cols)
         cellHeight: Math.round(cellWidth * 0.62)
 
         onAtYEndChanged: if (atYEnd)
+            view.loadMore()
+        onCurrentIndexChanged: if (currentIndex >= results.count - 12)
             view.loadMore()
 
         Keys.onPressed: event => {
@@ -542,16 +571,6 @@ FocusScope {
         width: grid.width - 48
         wrapMode: Text.WordWrap
         text: view.errorText !== "" ? view.errorText : view.loading ? "Buscando…" : "Nada encontrado."
-    }
-
-    StyledText {
-        anchors.horizontalCenter: grid.horizontalCenter
-        anchors.bottom: grid.bottom
-        visible: view.loading && results.count > 0
-        text: "Carregando mais…"
-        color: "#F2F2F2"
-        opacity: 0.6
-        font.pixelSize: Theme.fontSizeSmall
     }
 
     // ── Painel do wallpaper escolhido ─────────────────────────────────────

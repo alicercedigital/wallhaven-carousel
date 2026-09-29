@@ -1,0 +1,15 @@
+{
+    "id": "wallpaperHub",
+    "name": "Wallpaper Hub",
+    "description": "Carrossel de wallpapers com favoritos, exclusão e download do Wallhaven",
+    "version": "0.1.0",
+    "author": "dretz",
+    "icon": "wallpaper",
+    "type": "daemon",
+    "capabilities": ["wallpaper", "network"],
+    "component": "./WallpaperHub.qml",
+    "settings": "./Settings.qml",
+    "requires_dms": ">=1.6.0",
+    "dependencies": ["curl"],
+    "permissions": ["settings_read", "settings_write", "process", "network"]
+}

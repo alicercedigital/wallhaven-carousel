@@ -245,6 +245,7 @@ PluginComponent {
         } else {
             SessionData.setWallpaper(path);
         }
+        restartDmsCycle();
     }
 
     property int _seq: 0
@@ -265,6 +266,77 @@ PluginComponent {
             scanTimer.restart();
             ToastService?.showInfo("Na lixeira: " + name);
         }, 0, 15000, root);
+    }
+
+    // ── Prazo da troca automática do DMS ──────────────────────────────────
+    // Quem agenda é o servidor do DMS; aqui só se lê o prazo dele
+    // (wallpaper.getState) e, ao escolher um wallpaper à mão, o intervalo
+    // recomeça: o servidor só zera o prazo quando a agenda muda, então ela é
+    // desligada e religada, com a mesma configuração.
+    property real nextCycleAt: 0
+    property real nowMs: Date.now()
+
+    readonly property bool dmsCycleShown: SessionData.wallpaperCyclingEnabled && !SessionData.perMonitorWallpaper && nextCycleAt > 0
+    readonly property string cycleCountdown: {
+        if (!dmsCycleShown)
+            return "";
+        const seconds = Math.max(0, Math.ceil((nextCycleAt - nowMs) / 1000));
+        const hours = Math.floor(seconds / 3600);
+        const tail = String(Math.floor(seconds / 60) % 60).padStart(2, "0") + ":" + String(seconds % 60).padStart(2, "0");
+        return "próxima troca em " + (hours ? hours + ":" : "") + tail;
+    }
+
+    function setNextCycle(iso) {
+        nowMs = Date.now();
+        nextCycleAt = iso ? Date.parse(iso) : 0;
+    }
+
+    function refreshDmsCycle() {
+        if (!DMSService.capabilities.includes("wallpaper"))
+            return;
+        DMSService.sendRequest("wallpaper.getState", null, response => setNextCycle(response.result?.nextRotation));
+    }
+
+    function restartDmsCycle() {
+        if (!SessionData.wallpaperCyclingEnabled || !DMSService.capabilities.includes("wallpaper"))
+            return;
+        const off = WallpaperCyclingService.buildServerConfig();
+        off.global.enabled = false;
+        DMSService.sendRequest("wallpaper.setConfig", {
+            "config": off
+        }, () => {
+            WallpaperCyclingService.pushConfigToServer();
+            refreshDmsCycle();
+        });
+    }
+
+    Connections {
+        target: DMSService
+        function onWallpaperCycleUpdate(data) {
+            root.setNextCycle(data?.nextRotation);
+        }
+    }
+
+    Connections {
+        target: SessionData
+        function onWallpaperCyclingEnabledChanged() {
+            root.refreshDmsCycle();
+        }
+        function onWallpaperCyclingIntervalChanged() {
+            root.refreshDmsCycle();
+        }
+    }
+
+    Timer {
+        interval: 1000
+        running: root.overlayVisible && root.dmsCycleShown
+        repeat: true
+        onTriggered: root.nowMs = Date.now()
+    }
+
+    onOverlayVisibleChanged: {
+        if (overlayVisible)
+            refreshDmsCycle();
     }
 
     // ── Aleatório só dos favoritos ────────────────────────────────────────

@@ -303,7 +303,7 @@ FocusScope {
                 font.weight: Font.Bold
             }
             StyledText {
-                text: (view.anyFilter ? view.entries.length + " de " : "") + view.hub.names.length + " na pasta · " + view.hub.favoriteCount + " favoritos"
+                text: (view.anyFilter ? view.entries.length + " de " : "") + view.hub.names.length + " na pasta · " + view.hub.favoriteCount + " favoritos" + (view.hub.cycleCountdown ? " · " + view.hub.cycleCountdown : "")
                 color: "#F2F2F2"
                 opacity: 0.6
                 font.pixelSize: Theme.fontSizeSmall

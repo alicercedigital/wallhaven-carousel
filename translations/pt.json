@@ -1,0 +1,260 @@
+{
+  "%1 favorites": {
+    "%1 favorites": "%1 favoritos"
+  },
+  "%1 in the folder": {
+    "%1 in the folder": "%1 na pasta"
+  },
+  "%1 of %2": {
+    "%1 of %2": "%1 de %2"
+  },
+  "%1 of %2 in the folder": {
+    "%1 of %2 in the folder": "%1 de %2 na pasta"
+  },
+  "%1 views  ·  %2 favorites on Wallhaven": {
+    "%1 views  ·  %2 favorites on Wallhaven": "%1 visualizações  ·  %2 favoritos no Wallhaven"
+  },
+  "1 hour": {
+    "1 hour": "1 hora"
+  },
+  "15 minutes": {
+    "15 minutes": "15 minutos"
+  },
+  "3 hours": {
+    "3 hours": "3 horas"
+  },
+  "30 minutes": {
+    "30 minutes": "30 minutos"
+  },
+  "5 minutes": {
+    "5 minutes": "5 minutos"
+  },
+  "6 hours": {
+    "6 hours": "6 horas"
+  },
+  "Add": {
+    "Add": "Adicionar"
+  },
+  "Already in your folder.": {
+    "Already in your folder.": "Já está na sua pasta."
+  },
+  "analyzing colors…": {
+    "analyzing colors…": "analisando as cores…"
+  },
+  "Anime": {
+    "Anime": "Anime"
+  },
+  "Any size": {
+    "Any size": "Qualquer tamanho"
+  },
+  "Applies while the favorites shuffle is on.": {
+    "Applies while the favorites shuffle is on.": "Vale quando o aleatório dos favoritos está ligado."
+  },
+  "blue": {
+    "blue": "azul"
+  },
+  "Cancel": {
+    "Cancel": "Cancelar"
+  },
+  "Clear": {
+    "Clear": "Limpar"
+  },
+  "color": {
+    "color": "cor"
+  },
+  "Couldn't move it to the Trash": {
+    "Couldn't move it to the Trash": "Não consegui mandar para a lixeira"
+  },
+  "dark": {
+    "dark": "escuro"
+  },
+  "Delete": {
+    "Delete": "Excluir"
+  },
+  "Download and use": {
+    "Download and use": "Baixar e usar"
+  },
+  "Download failed": {
+    "Download failed": "O download falhou"
+  },
+  "Download only": {
+    "Download only": "Só baixar"
+  },
+  "Download, use and favorite": {
+    "Download, use and favorite": "Baixar, usar e favoritar"
+  },
+  "Downloading…": {
+    "Downloading…": "Baixando…"
+  },
+  "Empty: DMS's cycling folder, or the folder of the current wallpaper.": {
+    "Empty: DMS's cycling folder, or the folder of the current wallpaper.": "Vazio: a pasta da troca automática do DMS, ou a do wallpaper atual."
+  },
+  "favorite": {
+    "favorite": "favorito"
+  },
+  "Favorite": {
+    "Favorite": "Favoritar"
+  },
+  "Favorites only": {
+    "Favorites only": "Só favoritos"
+  },
+  "Favorites shuffle": {
+    "Favorites shuffle": "Aleatório dos favoritos"
+  },
+  "Favorites shuffle off": {
+    "Favorites shuffle off": "Aleatório dos favoritos desligado"
+  },
+  "Favorites shuffle on": {
+    "Favorites shuffle on": "Aleatório dos favoritos ligado"
+  },
+  "Favorites shuffle: on": {
+    "Favorites shuffle: on": "Aleatório dos favoritos: ligado"
+  },
+  "Filter by name or tag": {
+    "Filter by name or tag": "Filtrar pelo nome ou etiqueta"
+  },
+  "Filters": {
+    "Filters": "Filtros"
+  },
+  "General": {
+    "General": "Geral"
+  },
+  "gray": {
+    "gray": "cinza"
+  },
+  "green": {
+    "green": "verde"
+  },
+  "in use": {
+    "in use": "em uso"
+  },
+  "Latest": {
+    "Latest": "Recentes"
+  },
+  "Library": {
+    "Library": "Biblioteca"
+  },
+  "light": {
+    "light": "claro"
+  },
+  "Load more": {
+    "Load more": "Carregar mais"
+  },
+  "Loading…": {
+    "Loading…": "Carregando…"
+  },
+  "Mark a few favorites first (F key)": {
+    "Mark a few favorites first (F key)": "Marque alguns favoritos antes (tecla F)"
+  },
+  "Most favorited": {
+    "Most favorited": "Mais favoritados"
+  },
+  "Most viewed": {
+    "Most viewed": "Mais vistos"
+  },
+  "Move \"%1\" to the Trash?": {
+    "Move \"%1\" to the Trash?": "Mandar \"%1\" para a lixeira?"
+  },
+  "Move to the Trash": {
+    "Move to the Trash": "Mandar para a lixeira"
+  },
+  "Moved to the Trash: %1": {
+    "Moved to the Trash: %1": "Na lixeira: %1"
+  },
+  "next change in %1": {
+    "next change in %1": "próxima troca em %1"
+  },
+  "No connection to Wallhaven.": {
+    "No connection to Wallhaven.": "Sem conexão com o Wallhaven."
+  },
+  "No favorites yet. Press F on a wallpaper.": {
+    "No favorites yet. Press F on a wallpaper.": "Nenhum favorito ainda. Aperte F sobre um wallpaper."
+  },
+  "Nothing found.": {
+    "Nothing found.": "Nada encontrado."
+  },
+  "Nothing matches these filters.": {
+    "Nothing matches these filters.": "Nada com esses filtros."
+  },
+  "Open it with: dms ipc call wallhavenCarousel toggle. The plugin uses one folder, the same one as DMS's automatic wallpaper cycling.": {
+    "Open it with: dms ipc call wallhavenCarousel toggle. The plugin uses one folder, the same one as DMS's automatic wallpaper cycling.": "Abra com: dms ipc call wallhavenCarousel toggle. O plugin usa uma pasta só, a mesma da troca automática do DMS."
+  },
+  "orange": {
+    "orange": "laranja"
+  },
+  "People": {
+    "People": "Pessoas"
+  },
+  "Pick a wallpaper": {
+    "Pick a wallpaper": "Escolha um wallpaper"
+  },
+  "pink": {
+    "pink": "rosa"
+  },
+  "purple": {
+    "purple": "roxo"
+  },
+  "Random": {
+    "Random": "Aleatório"
+  },
+  "red": {
+    "red": "vermelho"
+  },
+  "Relevance": {
+    "Relevance": "Relevância"
+  },
+  "Search Wallhaven (Enter)": {
+    "Search Wallhaven (Enter)": "Buscar no Wallhaven (Enter)"
+  },
+  "Searching…": {
+    "Searching…": "Buscando…"
+  },
+  "Shuffle favorites every": {
+    "Shuffle favorites every": "Trocar entre os favoritos a cada"
+  },
+  "Tags show up for wallpapers from Wallhaven.": {
+    "Tags show up for wallpapers from Wallhaven.": "Etiquetas aparecem para o que vem do Wallhaven."
+  },
+  "teal": {
+    "teal": "turquesa"
+  },
+  "The folder is empty. Press A to download from Wallhaven.": {
+    "The folder is empty. Press A to download from Wallhaven.": "A pasta está vazia. Aperte A para baixar do Wallhaven."
+  },
+  "Top this month": {
+    "Top this month": "Top do mês"
+  },
+  "Try again": {
+    "Try again": "Tentar de novo"
+  },
+  "Unfavorite": {
+    "Unfavorite": "Desfavoritar"
+  },
+  "Use": {
+    "Use": "Usar"
+  },
+  "Wallhaven answered with an error (HTTP %1).": {
+    "Wallhaven answered with an error (HTTP %1).": "O Wallhaven respondeu com erro (HTTP %1)."
+  },
+  "Wallhaven is rate limiting searches. Wait a minute.": {
+    "Wallhaven is rate limiting searches. Wait a minute.": "O Wallhaven está limitando as buscas. Espere um minuto."
+  },
+  "Wallhaven sent an answer that isn't JSON.": {
+    "Wallhaven sent an answer that isn't JSON.": "O Wallhaven mandou uma resposta que não é JSON."
+  },
+  "Wallhaven sent an unexpected answer.": {
+    "Wallhaven sent an unexpected answer.": "Resposta inesperada do Wallhaven."
+  },
+  "Wallpaper folder": {
+    "Wallpaper folder": "Pasta dos wallpapers"
+  },
+  "Wallpapers": {
+    "Wallpapers": "Wallpapers"
+  },
+  "yellow": {
+    "yellow": "amarelo"
+  },
+  "← → browse    Enter use    F favorite    Del delete    / search    C filters (, . color  T tag)    Tab favorites only    R favorites shuffle    A add    Esc close": {
+    "← → browse    Enter use    F favorite    Del delete    / search    C filters (, . color  T tag)    Tab favorites only    R favorites shuffle    A add    Esc close": "← → navegar    Enter usar    F favorito    Del excluir    / buscar    C filtros (, . cor  T etiqueta)    Tab só favoritos    R aleatório dos favoritos    A adicionar    Esc fechar"
+  }
+}

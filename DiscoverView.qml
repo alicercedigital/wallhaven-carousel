@@ -3,8 +3,9 @@ import Quickshell.Widgets
 import qs.Common
 import qs.Widgets
 
-// Adicionar wallpapers: busca no Wallhaven (só SFW). Escolher um abre os
-// controles; baixar põe o arquivo na pasta e, se quiser, já usa e favorita.
+// Adding wallpapers: a Wallhaven search (SFW only). Picking one opens the
+// controls; downloading puts the file in the folder and, if asked, uses and
+// favorites it right away.
 FocusScope {
     id: view
 
@@ -35,7 +36,7 @@ FocusScope {
     readonly property bool selectedBusy: !!selected && !!hub.downloading[selected.wid]
     readonly property bool selectedIsFavorite: !!selected && !!hub.favoriteSet[selected.fileName]
 
-    // Detalhes do selecionado (etiquetas, visualizações), buscados sob demanda.
+    // Details of the selected one (tags, uploader), fetched on demand.
     property string detailFor: ""
     property var detail: ({})
 
@@ -70,32 +71,32 @@ FocusScope {
         return api + "/search?" + p.join("&");
     }
 
-    function curl(target) {
-        return ["curl", "-fsSL", "--connect-timeout", "10", "--max-time", "30", "--retry", "2", "--retry-all-errors", "-A", "wallpaperHub/0.1", target];
-    }
-
-    function explain(out, code) {
-        if (code === 22)
-            return "O Wallhaven recusou o pedido (limite de buscas por minuto?). Espere um pouco.";
-        if (code === 6 || code === 7 || code === 28)
-            return "Sem conexão com o Wallhaven.";
-        return "O Wallhaven não respondeu (curl " + code + ").";
+    // `dms dl` puts its error on stdout (see hub.fetch): "HTTP 429" is
+    // Wallhaven's limit of 45 requests a minute.
+    function explain(out) {
+        const http = /HTTP (\d+)/.exec(String(out));
+        if (http && http[1] === "429")
+            return I18n.trFor("wallhavenCarousel", "Wallhaven is rate limiting searches. Wait a minute.");
+        if (http)
+            return I18n.trFor("wallhavenCarousel", "Wallhaven answered with an error (HTTP %1).").arg(http[1]);
+        return I18n.trFor("wallhavenCarousel", "No connection to Wallhaven.");
     }
 
     function search() {
         const mine = ++serial;
         page = 1;
+        lastPage = 1;
         loading = true;
         errorText = "";
         loaded = true;
         results.clear();
         grid.currentIndex = -1;
-        Proc.runCommand("wallpaperHub.search", curl(url(1)), (out, code) => {
+        Proc.runCommand("wallhavenCarousel.search", hub.fetch(url(1)), (out, code) => {
             if (mine !== view.serial)
                 return;
             view.loading = false;
             if (code !== 0) {
-                view.errorText = view.explain(out, code);
+                view.errorText = view.explain(out);
                 return;
             }
             view.take(out);
@@ -111,12 +112,12 @@ FocusScope {
         const next = page + 1;
         loading = true;
         errorText = "";
-        Proc.runCommand("wallpaperHub.search", curl(url(next)), (out, code) => {
+        Proc.runCommand("wallhavenCarousel.search", hub.fetch(url(next)), (out, code) => {
             if (mine !== view.serial)
                 return;
             view.loading = false;
             if (code !== 0) {
-                view.errorText = view.explain(out, code);
+                view.errorText = view.explain(out);
                 return;
             }
             view.page = next;
@@ -129,11 +130,11 @@ FocusScope {
         try {
             js = JSON.parse(text);
         } catch (e) {
-            errorText = "Resposta inválida do Wallhaven.";
+            errorText = I18n.trFor("wallhavenCarousel", "Wallhaven sent an answer that isn't JSON.");
             return;
         }
         if (!js.data) {
-            errorText = js.error ? String(js.error) : "Resposta inesperada do Wallhaven.";
+            errorText = js.error ? String(js.error) : I18n.trFor("wallhavenCarousel", "Wallhaven sent an unexpected answer.");
             return;
         }
         if (js.meta) {
@@ -164,7 +165,7 @@ FocusScope {
             return;
         detailFor = wid;
         detail = ({});
-        Proc.runCommand("wallpaperHub.detail", curl(api + "/w/" + wid), (out, code) => {
+        Proc.runCommand("wallhavenCarousel.detail", hub.fetch(api + "/w/" + wid), (out, code) => {
             if (code !== 0 || view.detailFor !== wid)
                 return;
             try {
@@ -208,7 +209,7 @@ FocusScope {
         search();
     }
 
-    // ── Cabeçalho: voltar, busca e filtros ────────────────────────────────
+    // ── Header: back, search and filters ──────────────────────────────────
     Item {
         id: head
         anchors.top: parent.top
@@ -221,10 +222,10 @@ FocusScope {
             anchors.fill: parent
         }
 
-        HubButton {
+        PillButton {
             id: back
             icon: "arrow_back"
-            label: "Biblioteca"
+            label: I18n.trFor("wallhavenCarousel", "Library")
             hint: "Esc"
             onClicked: view.leave()
         }
@@ -239,12 +240,12 @@ FocusScope {
             font.weight: Font.Bold
         }
 
-        HubSearch {
+        SearchPill {
             id: searchBox
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: back.verticalCenter
             width: 420
-            placeholder: "Buscar no Wallhaven (Enter)"
+            placeholder: I18n.trFor("wallhavenCarousel", "Search Wallhaven (Enter)")
             text: view.query
             onAccepted: {
                 view.query = text;
@@ -259,7 +260,7 @@ FocusScope {
             anchors.verticalCenter: back.verticalCenter
             spacing: 10
 
-            HubButton {
+            PillButton {
                 icon: "close"
                 onClicked: view.hub.close()
             }
@@ -275,19 +276,19 @@ FocusScope {
             Repeater {
                 model: [
                     {
-                        label: "Geral",
+                        label: I18n.trFor("wallhavenCarousel", "General"),
                         i: 0
                     },
                     {
-                        label: "Anime",
+                        label: I18n.trFor("wallhavenCarousel", "Anime"),
                         i: 1
                     },
                     {
-                        label: "Pessoas",
+                        label: I18n.trFor("wallhavenCarousel", "People"),
                         i: 2
                     }
                 ]
-                delegate: HubButton {
+                delegate: PillButton {
                     required property var modelData
                     implicitHeight: 32
                     label: modelData.label
@@ -304,31 +305,31 @@ FocusScope {
             Repeater {
                 model: [
                     {
-                        label: "Top do mês",
+                        label: I18n.trFor("wallhavenCarousel", "Top this month"),
                         v: "toplist"
                     },
                     {
-                        label: "Recentes",
+                        label: I18n.trFor("wallhavenCarousel", "Latest"),
                         v: "date_added"
                     },
                     {
-                        label: "Mais vistos",
+                        label: I18n.trFor("wallhavenCarousel", "Most viewed"),
                         v: "views"
                     },
                     {
-                        label: "Mais favoritados",
+                        label: I18n.trFor("wallhavenCarousel", "Most favorited"),
                         v: "favorites"
                     },
                     {
-                        label: "Relevância",
+                        label: I18n.trFor("wallhavenCarousel", "Relevance"),
                         v: "relevance"
                     },
                     {
-                        label: "Aleatório",
+                        label: I18n.trFor("wallhavenCarousel", "Random"),
                         v: "random"
                     }
                 ]
-                delegate: HubButton {
+                delegate: PillButton {
                     required property var modelData
                     implicitHeight: 32
                     label: modelData.label
@@ -348,7 +349,7 @@ FocusScope {
             Repeater {
                 model: [
                     {
-                        label: "Qualquer tamanho",
+                        label: I18n.trFor("wallhavenCarousel", "Any size"),
                         v: ""
                     },
                     {
@@ -364,7 +365,7 @@ FocusScope {
                         v: "3840x2160"
                     }
                 ]
-                delegate: HubButton {
+                delegate: PillButton {
                     required property var modelData
                     implicitHeight: 32
                     label: modelData.label
@@ -378,7 +379,7 @@ FocusScope {
         }
     }
 
-    // ── Grade de resultados ───────────────────────────────────────────────
+    // ── Results grid ──────────────────────────────────────────────────────
     GridView {
         id: grid
         anchors.top: head.bottom
@@ -412,10 +413,10 @@ FocusScope {
                     color: "#FFB4AB"
                     font.pixelSize: Theme.fontSizeSmall
                 }
-                HubButton {
+                PillButton {
                     anchors.horizontalCenter: parent.horizontalCenter
                     icon: view.errorText !== "" ? "refresh" : "expand_more"
-                    label: view.loading ? "Carregando…" : view.errorText !== "" ? "Tentar de novo" : "Carregar mais"
+                    label: view.loading ? I18n.trFor("wallhavenCarousel", "Loading…") : view.errorText !== "" ? I18n.trFor("wallhavenCarousel", "Try again") : I18n.trFor("wallhavenCarousel", "Load more")
                     busy: view.loading
                     onClicked: view.loadMore()
                 }
@@ -570,10 +571,10 @@ FocusScope {
         horizontalAlignment: Text.AlignHCenter
         width: grid.width - 48
         wrapMode: Text.WordWrap
-        text: view.errorText !== "" ? view.errorText : view.loading ? "Buscando…" : "Nada encontrado."
+        text: view.errorText !== "" ? view.errorText : view.loading ? I18n.trFor("wallhavenCarousel", "Searching…") : I18n.trFor("wallhavenCarousel", "Nothing found.")
     }
 
-    // ── Painel do wallpaper escolhido ─────────────────────────────────────
+    // ── Panel of the selected wallpaper ───────────────────────────────────
     Rectangle {
         id: detailPanel
         anchors.top: head.bottom
@@ -620,7 +621,7 @@ FocusScope {
 
             StyledText {
                 width: parent.width
-                text: view.selected ? view.selected.views + " visualizações  ·  " + view.selected.favs + " favoritos no Wallhaven" : ""
+                text: view.selected ? I18n.trFor("wallhavenCarousel", "%1 views  ·  %2 favorites on Wallhaven").arg(view.selected.views).arg(view.selected.favs) : ""
                 color: "#F2F2F2"
                 opacity: 0.6
                 font.pixelSize: Theme.fontSizeSmall
@@ -669,64 +670,64 @@ FocusScope {
                 height: 4
             }
 
-            // Ainda não está na pasta: baixar.
+            // Not in the folder yet: download.
             Column {
                 visible: !view.selectedInLibrary
                 width: parent.width
                 spacing: 10
 
-                HubButton {
+                PillButton {
                     width: parent.width
                     icon: "download"
-                    label: view.selectedBusy ? "Baixando…" : "Baixar e usar"
+                    label: view.selectedBusy ? I18n.trFor("wallhavenCarousel", "Downloading…") : I18n.trFor("wallhavenCarousel", "Download and use")
                     hint: "Enter"
                     active: true
                     busy: view.selectedBusy
                     onClicked: view.downloadSelected(true, false)
                 }
-                HubButton {
+                PillButton {
                     width: parent.width
                     icon: "star"
-                    label: "Baixar, usar e favoritar"
+                    label: I18n.trFor("wallhavenCarousel", "Download, use and favorite")
                     hint: "F"
                     busy: view.selectedBusy
                     onClicked: view.downloadSelected(true, true)
                 }
-                HubButton {
+                PillButton {
                     width: parent.width
                     icon: "download"
-                    label: "Só baixar"
+                    label: I18n.trFor("wallhavenCarousel", "Download only")
                     hint: "D"
                     busy: view.selectedBusy
                     onClicked: view.downloadSelected(false, false)
                 }
             }
 
-            // Já está na pasta: usar ou favoritar.
+            // Already in the folder: use or favorite.
             Column {
                 visible: view.selectedInLibrary
                 width: parent.width
                 spacing: 10
 
                 StyledText {
-                    text: "Já está na sua pasta."
+                    text: I18n.trFor("wallhavenCarousel", "Already in your folder.")
                     color: "#F2F2F2"
                     opacity: 0.7
                     font.pixelSize: Theme.fontSizeMedium
                 }
-                HubButton {
+                PillButton {
                     width: parent.width
                     icon: "wallpaper"
-                    label: "Usar"
+                    label: I18n.trFor("wallhavenCarousel", "Use")
                     hint: "Enter"
                     active: true
                     onClicked: view.hub.apply(view.selected.fileName)
                 }
-                HubButton {
+                PillButton {
                     width: parent.width
                     icon: "star"
                     filledIcon: view.selectedIsFavorite
-                    label: view.selectedIsFavorite ? "Desfavoritar" : "Favoritar"
+                    label: view.selectedIsFavorite ? I18n.trFor("wallhavenCarousel", "Unfavorite") : I18n.trFor("wallhavenCarousel", "Favorite")
                     hint: "F"
                     onClicked: view.hub.toggleFavorite(view.selected.fileName)
                 }
@@ -736,7 +737,7 @@ FocusScope {
         StyledText {
             anchors.centerIn: parent
             visible: view.selected === null
-            text: "Escolha um wallpaper"
+            text: I18n.trFor("wallhavenCarousel", "Pick a wallpaper")
             color: "#F2F2F2"
             opacity: 0.5
             font.pixelSize: Theme.fontSizeMedium

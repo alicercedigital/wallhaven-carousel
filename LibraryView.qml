@@ -3,7 +3,7 @@ import Quickshell.Widgets
 import qs.Common
 import qs.Widgets
 
-// A biblioteca: os wallpapers da pasta num carrossel inclinado.
+// The library: the folder's wallpapers in a skewed carousel.
 FocusScope {
     id: view
 
@@ -11,8 +11,8 @@ FocusScope {
     property string screenName: ""
 
     readonly property int cardW: 250
-    // Encolhe quando a barra de filtros come altura, para o card grande não
-    // passar por cima do rodapé.
+    // Shrinks when the filter bar takes height, so the big card never
+    // covers the footer.
     readonly property int cardH: Math.max(220, Math.min(380, Math.floor(list.height / 1.25)))
     readonly property real skew: -0.28
     readonly property real skewPad: Math.abs(skew) * cardH / 2
@@ -31,57 +31,57 @@ FocusScope {
     readonly property var colorDefs: [
         {
             key: "red",
-            label: "vermelho",
+            label: I18n.trFor("wallhavenCarousel", "red"),
             hex: "#E5484D"
         },
         {
             key: "orange",
-            label: "laranja",
+            label: I18n.trFor("wallhavenCarousel", "orange"),
             hex: "#F76B15"
         },
         {
             key: "yellow",
-            label: "amarelo",
+            label: I18n.trFor("wallhavenCarousel", "yellow"),
             hex: "#FFC53D"
         },
         {
             key: "green",
-            label: "verde",
+            label: I18n.trFor("wallhavenCarousel", "green"),
             hex: "#30A46C"
         },
         {
             key: "teal",
-            label: "turquesa",
+            label: I18n.trFor("wallhavenCarousel", "teal"),
             hex: "#12A594"
         },
         {
             key: "blue",
-            label: "azul",
+            label: I18n.trFor("wallhavenCarousel", "blue"),
             hex: "#3E63DD"
         },
         {
             key: "purple",
-            label: "roxo",
+            label: I18n.trFor("wallhavenCarousel", "purple"),
             hex: "#8E4EC6"
         },
         {
             key: "pink",
-            label: "rosa",
+            label: I18n.trFor("wallhavenCarousel", "pink"),
             hex: "#E93D82"
         },
         {
             key: "dark",
-            label: "escuro",
+            label: I18n.trFor("wallhavenCarousel", "dark"),
             hex: "#1C1C1F"
         },
         {
             key: "light",
-            label: "claro",
+            label: I18n.trFor("wallhavenCarousel", "light"),
             hex: "#F0F0F0"
         },
         {
             key: "gray",
-            label: "cinza",
+            label: I18n.trFor("wallhavenCarousel", "gray"),
             hex: "#8B8D98"
         }
     ]
@@ -105,7 +105,7 @@ FocusScope {
                 }));
     }
 
-    // Percorre "sem filtro" e as opções, para filtrar só pelo teclado.
+    // Steps through "no filter" and the options, to filter from the keyboard.
     function cycle(options, current, step) {
         const i = options.indexOf(current);
         return options[(i + step + options.length) % options.length];
@@ -133,7 +133,7 @@ FocusScope {
         list.forceActiveFocus();
     }
 
-    // Ao abrir: sem filtro, com o wallpaper em uso no centro.
+    // On open: no filters, with the wallpaper in use in the center.
     function reset() {
         searching = false;
         searchText = "";
@@ -149,8 +149,9 @@ FocusScope {
         id: shown
     }
 
-    // Põe `out` no modelo. Se só sumiu um item (exclusão), remove essa linha e
-    // o ListView mantém a posição sozinho; trocar o modelo inteiro o zeraria.
+    // Puts `out` in the model. If only one item is gone (a delete), removes
+    // that row and the ListView keeps its position; replacing the whole model
+    // would reset it.
     function sync(out) {
         if (out.length === entries.length - 1) {
             let i = 0;
@@ -279,7 +280,7 @@ FocusScope {
         list.forceActiveFocus();
     }
 
-    // ── Barra de cima ─────────────────────────────────────────────────────
+    // ── Top bar ───────────────────────────────────────────────────────────
     Item {
         id: topBar
         anchors.top: parent.top
@@ -297,25 +298,30 @@ FocusScope {
             spacing: 2
 
             StyledText {
-                text: "Wallpapers"
+                text: I18n.trFor("wallhavenCarousel", "Wallpapers")
                 color: "#F2F2F2"
                 font.pixelSize: Theme.fontSizeXLarge
                 font.weight: Font.Bold
             }
             StyledText {
-                text: (view.anyFilter ? view.entries.length + " de " : "") + view.hub.names.length + " na pasta · " + view.hub.favoriteCount + " favoritos" + (view.hub.cycleCountdown ? " · " + view.hub.cycleCountdown : "")
+                text: {
+                    const parts = [view.anyFilter ? I18n.trFor("wallhavenCarousel", "%1 of %2 in the folder").arg(view.entries.length).arg(view.hub.names.length) : I18n.trFor("wallhavenCarousel", "%1 in the folder").arg(view.hub.names.length), I18n.trFor("wallhavenCarousel", "%1 favorites").arg(view.hub.favoriteCount)];
+                    if (view.hub.cycleCountdown)
+                        parts.push(view.hub.cycleCountdown);
+                    return parts.join(" · ");
+                }
                 color: "#F2F2F2"
                 opacity: 0.6
                 font.pixelSize: Theme.fontSizeSmall
             }
         }
 
-        HubSearch {
+        SearchPill {
             id: searchBox
             visible: view.searching
             width: 320
             anchors.centerIn: parent
-            placeholder: "Filtrar pelo nome"
+            placeholder: I18n.trFor("wallhavenCarousel", "Filter by name or tag")
             onTextChanged: view.searchText = text
             onAccepted: list.forceActiveFocus()
             onEscaped: view.closeSearch()
@@ -326,14 +332,14 @@ FocusScope {
             anchors.verticalCenter: parent.verticalCenter
             spacing: 10
 
-            HubButton {
+            PillButton {
                 icon: "search"
                 active: view.searching
                 onClicked: view.searching ? view.closeSearch() : view.openSearch()
             }
-            HubButton {
+            PillButton {
                 icon: "palette"
-                label: "Filtros"
+                label: I18n.trFor("wallhavenCarousel", "Filters")
                 hint: "C"
                 active: view.filtersOpen || view.colorFilter !== "" || view.tagFilter !== ""
                 onClicked: {
@@ -341,39 +347,39 @@ FocusScope {
                     list.forceActiveFocus();
                 }
             }
-            HubButton {
+            PillButton {
                 icon: "star"
                 filledIcon: true
-                label: "Só favoritos"
+                label: I18n.trFor("wallhavenCarousel", "Favorites only")
                 active: view.favoritesOnly
                 onClicked: {
                     view.favoritesOnly = !view.favoritesOnly;
                     list.forceActiveFocus();
                 }
             }
-            HubButton {
+            PillButton {
                 icon: "shuffle"
-                label: view.hub.favoritesRandom ? "Aleatório dos favoritos: ligado" : "Aleatório dos favoritos"
+                label: view.hub.favoritesRandom ? I18n.trFor("wallhavenCarousel", "Favorites shuffle: on") : I18n.trFor("wallhavenCarousel", "Favorites shuffle")
                 active: view.hub.favoritesRandom
                 onClicked: {
                     view.hub.setFavoritesRandom(!view.hub.favoritesRandom);
                     list.forceActiveFocus();
                 }
             }
-            HubButton {
+            PillButton {
                 icon: "add_photo_alternate"
-                label: "Adicionar"
+                label: I18n.trFor("wallhavenCarousel", "Add")
                 hint: "A"
                 onClicked: view.hub.showDiscover()
             }
-            HubButton {
+            PillButton {
                 icon: "close"
                 onClicked: view.hub.close()
             }
         }
     }
 
-    // ── Filtros: cor e etiqueta ───────────────────────────────────────────
+    // ── Filters: color and tag ────────────────────────────────────────────
     Item {
         id: filterBar
         anchors.top: topBar.bottom
@@ -447,13 +453,13 @@ FocusScope {
                         const d = view.colorDefs.find(c => c.key === view.colorFilter);
                         return d.label + " · " + (view.colorCounts[d.key] || 0);
                     }
-                    return view.hub.analyzing ? "analisando as cores…" : Object.keys(view.hub.colors).length === 0 ? "" : "cor";
+                    return view.hub.analyzing ? I18n.trFor("wallhavenCarousel", "analyzing colors…") : Object.keys(view.hub.colors).length === 0 ? "" : I18n.trFor("wallhavenCarousel", "color");
                 }
             }
 
             Repeater {
                 model: view.topTags
-                delegate: HubButton {
+                delegate: PillButton {
                     required property var modelData
                     implicitHeight: 32
                     label: modelData.tag
@@ -474,14 +480,14 @@ FocusScope {
                 color: "#F2F2F2"
                 opacity: 0.45
                 font.pixelSize: Theme.fontSizeSmall
-                text: "Etiquetas aparecem para o que vem do Wallhaven."
+                text: I18n.trFor("wallhavenCarousel", "Tags show up for wallpapers from Wallhaven.")
             }
 
-            HubButton {
+            PillButton {
                 visible: view.colorFilter !== "" || view.tagFilter !== ""
                 implicitHeight: 32
                 icon: "close"
-                label: "Limpar"
+                label: I18n.trFor("wallhavenCarousel", "Clear")
                 onClicked: {
                     view.colorFilter = "";
                     view.tagFilter = "";
@@ -491,7 +497,7 @@ FocusScope {
         }
     }
 
-    // ── Carrossel ─────────────────────────────────────────────────────────
+    // ── Carousel ──────────────────────────────────────────────────────────
     ListView {
         id: list
         anchors.left: parent.left
@@ -636,8 +642,8 @@ FocusScope {
                     }
                 }
 
-                // Corta o paralelogramo: o retângulo é entortado, e o conteúdo
-                // é entortado de volta para a imagem aparecer em pé.
+                // Cuts the parallelogram: the rectangle is skewed, and its
+                // content skewed back so the picture stands upright.
                 transform: Matrix4x4 {
                     matrix: Qt.matrix4x4(1, view.skew, 0, -view.skew * view.cardH / 2, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
                 }
@@ -707,7 +713,7 @@ FocusScope {
                             StyledText {
                                 id: inUseLabel
                                 anchors.centerIn: parent
-                                text: "em uso"
+                                text: I18n.trFor("wallhavenCarousel", "in use")
                                 color: "#F2F2F2"
                                 font.pixelSize: Theme.fontSizeSmall
                             }
@@ -745,10 +751,10 @@ FocusScope {
         color: "#F2F2F2"
         opacity: 0.7
         font.pixelSize: Theme.fontSizeLarge
-        text: view.favoritesOnly && view.colorFilter === "" && view.tagFilter === "" ? "Nenhum favorito ainda. Aperte F sobre um wallpaper." : view.anyFilter ? "Nada com esses filtros." : "A pasta está vazia. Aperte A para baixar do Wallhaven."
+        text: view.favoritesOnly && view.colorFilter === "" && view.tagFilter === "" ? I18n.trFor("wallhavenCarousel", "No favorites yet. Press F on a wallpaper.") : view.anyFilter ? I18n.trFor("wallhavenCarousel", "Nothing matches these filters.") : I18n.trFor("wallhavenCarousel", "The folder is empty. Press A to download from Wallhaven.")
     }
 
-    // ── Barra de baixo ────────────────────────────────────────────────────
+    // ── Bottom bar ────────────────────────────────────────────────────────
     Item {
         id: bottomBar
         anchors.bottom: parent.bottom
@@ -771,7 +777,7 @@ FocusScope {
                 width: Math.min(implicitWidth, bottomBar.width - 64)
                 elide: Text.ElideRight
                 horizontalAlignment: Text.AlignHCenter
-                text: view.confirmName !== "" ? "Mandar “" + view.confirmName + "” para a lixeira?" : (view.current ? view.current.name : "")
+                text: view.confirmName !== "" ? I18n.trFor("wallhavenCarousel", "Move \"%1\" to the Trash?").arg(view.confirmName) : (view.current ? view.current.name : "")
                 color: "#F2F2F2"
                 font.pixelSize: Theme.fontSizeXLarge
                 font.weight: Font.Medium
@@ -780,7 +786,7 @@ FocusScope {
             StyledText {
                 anchors.horizontalCenter: parent.horizontalCenter
                 visible: view.current !== null
-                text: (list.currentIndex + 1) + " de " + list.count + (view.currentIsFavorite ? " · favorito" : "") + (view.current && view.current.name === view.hub.currentName ? " · em uso" : "")
+                text: I18n.trFor("wallhavenCarousel", "%1 of %2").arg(list.currentIndex + 1).arg(list.count) + (view.currentIsFavorite ? " · " + I18n.trFor("wallhavenCarousel", "favorite") : "") + (view.current && view.current.name === view.hub.currentName ? " · " + I18n.trFor("wallhavenCarousel", "in use") : "")
                 color: "#F2F2F2"
                 opacity: 0.6
                 font.pixelSize: Theme.fontSizeMedium
@@ -791,41 +797,41 @@ FocusScope {
                 spacing: 10
                 topPadding: 8
 
-                HubButton {
+                PillButton {
                     visible: view.confirmName === "" && view.current !== null
                     icon: "wallpaper"
-                    label: "Usar"
+                    label: I18n.trFor("wallhavenCarousel", "Use")
                     hint: "Enter"
                     active: true
                     onClicked: view.applyCurrent()
                 }
-                HubButton {
+                PillButton {
                     visible: view.confirmName === "" && view.current !== null
                     icon: "star"
                     filledIcon: view.currentIsFavorite
-                    label: view.currentIsFavorite ? "Desfavoritar" : "Favoritar"
+                    label: view.currentIsFavorite ? I18n.trFor("wallhavenCarousel", "Unfavorite") : I18n.trFor("wallhavenCarousel", "Favorite")
                     hint: "F"
                     onClicked: view.hub.toggleFavorite(view.current.name)
                 }
-                HubButton {
+                PillButton {
                     visible: view.confirmName === "" && view.current !== null
                     icon: "delete"
-                    label: "Excluir"
+                    label: I18n.trFor("wallhavenCarousel", "Delete")
                     hint: "Del"
                     danger: true
                     onClicked: view.startDelete()
                 }
-                HubButton {
+                PillButton {
                     visible: view.confirmName !== ""
                     icon: "delete"
-                    label: "Mandar para a lixeira"
+                    label: I18n.trFor("wallhavenCarousel", "Move to the Trash")
                     hint: "Enter"
                     danger: true
                     onClicked: view.confirmDelete()
                 }
-                HubButton {
+                PillButton {
                     visible: view.confirmName !== ""
-                    label: "Cancelar"
+                    label: I18n.trFor("wallhavenCarousel", "Cancel")
                     hint: "Esc"
                     onClicked: view.confirmName = ""
                 }
@@ -835,7 +841,7 @@ FocusScope {
         StyledText {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
-            text: "← → navegar    Enter usar    F favorito    Del excluir    / buscar    C filtros (, . cor  T etiqueta)    Tab só favoritos    R aleatório dos favoritos    A adicionar    Esc fechar"
+            text: I18n.trFor("wallhavenCarousel", "← → browse    Enter use    F favorite    Del delete    / search    C filters (, . color  T tag)    Tab favorites only    R favorites shuffle    A add    Esc close")
             color: "#F2F2F2"
             opacity: 0.4
             font.pixelSize: Theme.fontSizeSmall

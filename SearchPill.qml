@@ -2,7 +2,7 @@ import QtQuick
 import qs.Common
 import qs.Widgets
 
-// Campo de busca sobre o fundo escuro do painel.
+// A search field on the overlay's dark backdrop.
 Rectangle {
     id: box
 

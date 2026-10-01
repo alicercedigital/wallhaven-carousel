@@ -8,23 +8,30 @@ import qs.Services
 import qs.Widgets
 import qs.Modules.Plugins
 
-// Wallpaper Hub: carrossel da pasta de wallpapers, com favoritos, exclusão,
-// download do Wallhaven e a troca aleatória só entre os favoritos.
-// O DMS continua dono do wallpaper (SessionData); aqui só se escolhe qual.
+// Wallhaven Carousel: a carousel of the wallpaper folder, with favorites,
+// Trash, color and tag filters, Wallhaven downloads and a shuffle among
+// favorites only. DMS still owns the wallpaper (SessionData); this only
+// picks which one.
 PluginComponent {
     id: root
 
     property var popoutService: null
 
-    // ── Pasta ─────────────────────────────────────────────────────────────
-    // Uma pasta só: a que o plugin diz, senão a da troca automática do DMS,
-    // senão a do wallpaper atual.
+    readonly property string userAgent: "wallhavenCarousel/1.0"
+
+    // ── Folder ────────────────────────────────────────────────────────────
+    // One folder: the plugin's own setting, else DMS's cycling folder, else
+    // the folder of the current wallpaper.
     function stripFile(p) {
         return String(p ?? "").replace(/^file:\/\//, "");
     }
 
+    function expandHome(p) {
+        return p.replace(/^~(?=\/|$)/, Quickshell.env("HOME") || "~");
+    }
+
     readonly property string folder: {
-        const own = stripFile(pluginData?.folder).trim();
+        const own = expandHome(stripFile(pluginData?.folder).trim());
         if (own)
             return own.replace(/\/+$/, "");
         const cycling = stripFile(SessionData.wallpaperCyclingFolderPath).trim();
@@ -46,7 +53,7 @@ PluginComponent {
         return "file://" + folder + "/" + encodeURIComponent(name);
     }
 
-    // ── Arquivos da pasta ─────────────────────────────────────────────────
+    // ── Files in the folder ───────────────────────────────────────────────
     property var names: []
     property var nameSet: ({})
 
@@ -83,8 +90,8 @@ PluginComponent {
         tagTimer.restart();
     }
 
-    // ── Favoritos ─────────────────────────────────────────────────────────
-    // Guardados pelo nome do arquivo em plugin_settings.json: a pasta é uma só.
+    // ── Favorites ─────────────────────────────────────────────────────────
+    // Stored by file name in plugin_settings.json: there is only one folder.
     property var favorites: []
     readonly property var favoriteSet: {
         const s = {};
@@ -128,13 +135,13 @@ PluginComponent {
         setFavorite(name, !favoriteSet[name]);
     }
 
-    // ── Cores e etiquetas (para filtrar) ──────────────────────────────────
-    // As cores saem da própria imagem (colors.py, com cache em ~/.local/state);
-    // as etiquetas vêm do Wallhaven, só para o que foi baixado de lá.
+    // ── Colors and tags (for the filters) ─────────────────────────────────
+    // Colors come from the image itself (colors.py, cached in ~/.local/state);
+    // tags come from Wallhaven, only for what was downloaded from there.
     property var colors: ({})
     property bool analyzing: false
     property bool analyzeAgain: false
-    readonly property string colorCache: stripFile(Paths.state) + "/wallpaperHub/colors.json"
+    readonly property string colorCache: stripFile(Paths.state) + "/wallhavenCarousel/colors.json"
 
     Timer {
         id: analyzeTimer
@@ -152,13 +159,13 @@ PluginComponent {
         }
         analyzing = true;
         analyzeAgain = false;
-        Proc.runCommand("wallpaperHub.colors", ["nice", "-n", "10", "python3", dir + "/colors.py", folder, colorCache], (out, code) => {
+        Proc.runCommand("wallhavenCarousel.colors", ["nice", "-n", "10", "python3", dir + "/colors.py", folder, colorCache], (out, code) => {
             root.analyzing = false;
             if (code === 0) {
                 try {
                     root.colors = JSON.parse(out);
                 } catch (e) {
-                    console.warn("wallpaperHub: colors.py devolveu algo que não é JSON");
+                    console.warn("wallhavenCarousel: colors.py returned something that is not JSON");
                 }
             }
             if (root.analyzeAgain)
@@ -200,7 +207,14 @@ PluginComponent {
         onTriggered: root.nextTag()
     }
 
-    // O nome wallhaven-<id>.<ext> diz de onde veio; busca as etiquetas que faltam.
+    // `dms dl` with its errors on stdout, the only stream Proc hands back,
+    // so "HTTP 429" tells a rate limit from a dropped connection.
+    function fetch(url) {
+        return ["sh", "-c", 'exec dms dl --connect-timeout 10 --timeout 30 --user-agent "$1" "$2" 2>&1', "sh", userAgent, url];
+    }
+
+    // The name wallhaven-<id>.<ext> says where it came from; fetch the
+    // missing tags.
     function queueTags() {
         const q = [];
         for (const n of names) {
@@ -221,7 +235,7 @@ PluginComponent {
         tagBusy = true;
         const it = tagQueue[0];
         tagQueue = tagQueue.slice(1);
-        Proc.runCommand("wallpaperHub.tags", ["curl", "-fsSL", "--connect-timeout", "10", "--max-time", "30", "-A", "wallpaperHub/0.1", "https://wallhaven.cc/api/v1/w/" + it.wid], (out, code) => {
+        Proc.runCommand("wallhavenCarousel.tags", fetch("https://wallhaven.cc/api/v1/w/" + it.wid), (out, code) => {
             root.tagBusy = false;
             if (code === 0) {
                 try {
@@ -232,7 +246,7 @@ PluginComponent {
         }, 0, 40000, root);
     }
 
-    // ── Aplicar, excluir ──────────────────────────────────────────────────
+    // ── Apply, delete ─────────────────────────────────────────────────────
     function apply(name, screenName) {
         const path = folder + "/" + name;
         if (SessionData.perMonitorWallpaper) {
@@ -250,29 +264,29 @@ PluginComponent {
 
     property int _seq: 0
 
-    // Vai para a lixeira, nunca apaga de vez. Se era o wallpaper em uso,
-    // `replacement` assume o lugar antes.
+    // Goes to the Trash, never deleted for good. If it was the wallpaper in
+    // use, `replacement` takes its place first.
     function deleteWallpaper(name, replacement) {
         if (name === currentName && replacement)
             apply(replacement);
-        Proc.runCommand("wallpaperHub.trash." + (++_seq), ["gio", "trash", folder + "/" + name], (out, code) => {
+        Proc.runCommand("wallhavenCarousel.trash." + (++_seq), ["sh", "-c", 'exec dms trash put "$1" 2>&1', "sh", folder + "/" + name], (out, code) => {
             if (code !== 0) {
-                ToastService?.showError("Não consegui mandar para a lixeira", String(out));
+                ToastService?.showError(I18n.trFor("wallhavenCarousel", "Couldn't move it to the Trash"), String(out));
                 return;
             }
             setFavorite(name, false);
             if (tags[name] !== undefined)
                 setTags(name, null);
             scanTimer.restart();
-            ToastService?.showInfo("Na lixeira: " + name);
+            ToastService?.showInfo(I18n.trFor("wallhavenCarousel", "Moved to the Trash: %1").arg(name));
         }, 0, 15000, root);
     }
 
-    // ── Prazo da troca automática do DMS ──────────────────────────────────
-    // Quem agenda é o servidor do DMS; aqui só se lê o prazo dele
-    // (wallpaper.getState) e, ao escolher um wallpaper à mão, o intervalo
-    // recomeça: o servidor só zera o prazo quando a agenda muda, então ela é
-    // desligada e religada, com a mesma configuração.
+    // ── Countdown of DMS's own wallpaper cycling ──────────────────────────
+    // The DMS server keeps the schedule; this only reads its deadline
+    // (wallpaper.getState). Picking a wallpaper by hand restarts the
+    // interval: the server only resets the deadline when the schedule
+    // changes, so cycling is turned off and back on with the same config.
     property real nextCycleAt: 0
     property real nowMs: Date.now()
 
@@ -283,7 +297,7 @@ PluginComponent {
         const seconds = Math.max(0, Math.ceil((nextCycleAt - nowMs) / 1000));
         const hours = Math.floor(seconds / 3600);
         const tail = String(Math.floor(seconds / 60) % 60).padStart(2, "0") + ":" + String(seconds % 60).padStart(2, "0");
-        return "próxima troca em " + (hours ? hours + ":" : "") + tail;
+        return I18n.trFor("wallhavenCarousel", "next change in %1").arg((hours ? hours + ":" : "") + tail);
     }
 
     function setNextCycle(iso) {
@@ -339,9 +353,9 @@ PluginComponent {
             refreshDmsCycle();
     }
 
-    // ── Aleatório só dos favoritos ────────────────────────────────────────
-    // O timer do DMS troca entre todos os arquivos da pasta. Enquanto este
-    // está ligado, o do DMS fica desligado (e volta como estava ao desligar).
+    // ── Shuffle among favorites only ──────────────────────────────────────
+    // DMS's timer cycles through every file in the folder. While this one is
+    // on, DMS's is off (and comes back as it was when this is turned off).
     readonly property bool favoritesRandom: !!pluginData?.favoritesRandom
     readonly property int favoritesIntervalMin: parseInt(pluginData?.favoritesInterval) || 60
     property bool _changingCycling: false
@@ -369,7 +383,7 @@ PluginComponent {
             return;
         if (on) {
             if (favoriteCount === 0) {
-                ToastService?.showInfo("Marque alguns favoritos antes (tecla F)");
+                ToastService?.showInfo(I18n.trFor("wallhavenCarousel", "Mark a few favorites first (F key)"));
                 return;
             }
             if (SessionData.wallpaperCyclingEnabled) {
@@ -378,18 +392,18 @@ PluginComponent {
             }
             saveData("favoritesRandom", true);
             pickRandomFavorite();
-            ToastService?.showInfo("Aleatório dos favoritos ligado");
+            ToastService?.showInfo(I18n.trFor("wallhavenCarousel", "Favorites shuffle on"));
         } else {
             saveData("favoritesRandom", false);
             if (pluginData?.restoreCycling) {
                 saveData("restoreCycling", false);
                 setDmsCycling(true);
             }
-            ToastService?.showInfo("Aleatório dos favoritos desligado");
+            ToastService?.showInfo(I18n.trFor("wallhavenCarousel", "Favorites shuffle off"));
         }
     }
 
-    // Se o troca-automática do DMS for ligado por fora, ele manda: este desliga.
+    // If DMS's cycling is turned on from elsewhere, it wins: this turns off.
     Connections {
         target: SessionData
         function onWallpaperCyclingEnabledChanged() {
@@ -407,7 +421,7 @@ PluginComponent {
         onTriggered: root.pickRandomFavorite()
     }
 
-    // ── Download do Wallhaven ─────────────────────────────────────────────
+    // ── Wallhaven downloads ───────────────────────────────────────────────
     property var downloading: ({})
 
     signal downloaded(string name)
@@ -432,22 +446,23 @@ PluginComponent {
             [item.wid]: true
         });
         const dest = folder + "/" + name;
-        // Baixa para .part e só então renomeia: a pasta nunca mostra arquivo pela metade.
-        Proc.runCommand("wallpaperHub.download." + item.wid, ["sh", "-c", 'mkdir -p "$(dirname "$1")" && curl -fsSL --connect-timeout 10 --max-time 180 --retry 3 --retry-all-errors -A "wallpaperHub/0.1" -o "$1.part" "$2" && mv "$1.part" "$1"', "sh", dest, item.full], (out, code) => {
+        // Downloads to .part and only then renames, so the folder never shows
+        // a half-written file. Three tries, for a flaky connection.
+        const script = 'mkdir -p "$(dirname "$1")" || exit 1; for i in 1 2 3; do dms dl --connect-timeout 10 --timeout 180 --user-agent "$3" -o "$1.part" "$2" >/dev/null 2>&1 && exec mv "$1.part" "$1"; sleep 2; done; rm -f "$1.part"; exit 1';
+        Proc.runCommand("wallhavenCarousel.download." + item.wid, ["sh", "-c", script, "sh", dest, item.full, userAgent], (out, code) => {
             const d = Object.assign({}, root.downloading);
             delete d[item.wid];
             root.downloading = d;
             if (code !== 0) {
-                Quickshell.execDetached(["rm", "-f", dest + ".part"]);
-                ToastService?.showError("O download falhou", String(out));
+                ToastService?.showError(I18n.trFor("wallhavenCarousel", "Download failed"), item.full);
                 return;
             }
             scanTimer.restart();
             finish();
-        }, 0, 200000, root);
+        }, 0, 600000, root);
     }
 
-    // ── Painel ────────────────────────────────────────────────────────────
+    // ── Overlay ───────────────────────────────────────────────────────────
     property string mode: "library"
     readonly property bool overlayVisible: overlay.visible
 
@@ -491,7 +506,7 @@ PluginComponent {
     }
 
     IpcHandler {
-        target: "wallpaperHub"
+        target: "wallhavenCarousel"
 
         function toggle(): string {
             root.toggle();
@@ -512,18 +527,18 @@ PluginComponent {
             root.close();
             return "closed";
         }
-        // Marca ou desmarca o wallpaper em uso.
+        // Marks or unmarks the wallpaper in use.
         function favorite(): string {
             if (!root.currentName || !root.nameSet[root.currentName])
                 return "no-current";
             root.toggleFavorite(root.currentName);
             return root.favoriteSet[root.currentName] ? "favorited" : "unfavorited";
         }
-        // Troca agora por um favorito ao acaso.
+        // Switches now to a random favorite.
         function random(): string {
             return root.pickRandomFavorite() ? "changed" : "no-favorites";
         }
-        // on, off ou toggle.
+        // on, off or toggle.
         function favoritesRandom(mode: string): string {
             const on = mode === "toggle" ? !root.favoritesRandom : mode === "on";
             root.setFavoritesRandom(on);
@@ -536,7 +551,7 @@ PluginComponent {
         visible: false
         color: "transparent"
 
-        WlrLayershell.namespace: "dms:plugins:wallpaperHub"
+        WlrLayershell.namespace: "dms:plugins:wallhavenCarousel"
         WlrLayershell.layer: WlrLayershell.Overlay
         WlrLayershell.exclusiveZone: -1
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
@@ -559,7 +574,7 @@ PluginComponent {
             }
         }
 
-        // Clicar fora de tudo fecha.
+        // A click outside everything closes.
         MouseArea {
             anchors.fill: parent
             onClicked: root.close()
@@ -585,6 +600,6 @@ PluginComponent {
         loadFavorites();
         loadTags();
         scanTimer.restart();
-        console.info("wallpaperHub: pronto (dms ipc call wallpaperHub toggle)");
+        console.info("wallhavenCarousel: ready (dms ipc call wallhavenCarousel toggle)");
     }
 }

@@ -2,7 +2,7 @@ import QtQuick
 import qs.Common
 import qs.Widgets
 
-// Botão em forma de pílula, feito para ficar sobre o fundo escuro do painel.
+// A pill-shaped button, made to sit on the overlay's dark backdrop.
 Rectangle {
     id: btn
 

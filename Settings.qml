@@ -4,11 +4,11 @@ import qs.Widgets
 import qs.Modules.Plugins
 
 PluginSettings {
-    pluginId: "wallpaperHub"
+    pluginId: "wallhavenCarousel"
 
     StyledText {
         width: parent.width
-        text: "Wallpaper Hub"
+        text: "Wallhaven Carousel"
         font.pixelSize: Theme.fontSizeLarge
         font.weight: Font.Bold
         color: Theme.surfaceText
@@ -16,7 +16,7 @@ PluginSettings {
 
     StyledText {
         width: parent.width
-        text: "Abra com: dms ipc call wallpaperHub toggle. O plugin usa uma pasta só, a mesma da troca automática do DMS."
+        text: I18n.trFor("wallhavenCarousel", "Open it with: dms ipc call wallhavenCarousel toggle. The plugin uses one folder, the same one as DMS's automatic wallpaper cycling.")
         font.pixelSize: Theme.fontSizeSmall
         color: Theme.surfaceVariantText
         wrapMode: Text.WordWrap
@@ -24,38 +24,38 @@ PluginSettings {
 
     StringSetting {
         settingKey: "folder"
-        label: "Pasta dos wallpapers"
-        description: "Vazio: a pasta da troca automática do DMS, ou a do wallpaper atual."
-        placeholder: "/home/dretz/Wallpapers"
+        label: I18n.trFor("wallhavenCarousel", "Wallpaper folder")
+        description: I18n.trFor("wallhavenCarousel", "Empty: DMS's cycling folder, or the folder of the current wallpaper.")
+        placeholder: "~/Pictures/Wallpapers"
     }
 
     SelectionSetting {
         settingKey: "favoritesInterval"
-        label: "Trocar entre os favoritos a cada"
-        description: "Vale quando o aleatório dos favoritos está ligado."
+        label: I18n.trFor("wallhavenCarousel", "Shuffle favorites every")
+        description: I18n.trFor("wallhavenCarousel", "Applies while the favorites shuffle is on.")
         options: [
             {
-                label: "5 minutos",
+                label: I18n.trFor("wallhavenCarousel", "5 minutes"),
                 value: "5"
             },
             {
-                label: "15 minutos",
+                label: I18n.trFor("wallhavenCarousel", "15 minutes"),
                 value: "15"
             },
             {
-                label: "30 minutos",
+                label: I18n.trFor("wallhavenCarousel", "30 minutes"),
                 value: "30"
             },
             {
-                label: "1 hora",
+                label: I18n.trFor("wallhavenCarousel", "1 hour"),
                 value: "60"
             },
             {
-                label: "3 horas",
+                label: I18n.trFor("wallhavenCarousel", "3 hours"),
                 value: "180"
             },
             {
-                label: "6 horas",
+                label: I18n.trFor("wallhavenCarousel", "6 hours"),
                 value: "360"
             }
         ]

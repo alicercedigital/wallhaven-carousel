@@ -1,15 +1,15 @@
 {
-    "id": "wallpaperHub",
-    "name": "Wallpaper Hub",
-    "description": "Carrossel de wallpapers com favoritos, exclusão e download do Wallhaven",
-    "version": "0.1.0",
+    "id": "wallhavenCarousel",
+    "name": "Wallhaven Carousel",
+    "description": "Skewed fullscreen carousel of your wallpaper folder with favorites, a favorites-only shuffle, color and tag filters, Trash, and Wallhaven search and download built in",
+    "version": "1.0.0",
     "author": "dretz",
     "icon": "wallpaper",
     "type": "daemon",
     "capabilities": ["wallpaper", "network"],
-    "component": "./WallpaperHub.qml",
+    "component": "./WallhavenCarousel.qml",
     "settings": "./Settings.qml",
     "requires_dms": ">=1.6.0",
-    "dependencies": ["curl"],
+    "dependencies": ["python3", "imagemagick"],
     "permissions": ["settings_read", "settings_write", "process", "network"]
 }

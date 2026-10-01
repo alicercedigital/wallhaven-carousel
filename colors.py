@@ -1,27 +1,30 @@
 #!/usr/bin/env python3
-"""Diz que cores tem cada wallpaper de uma pasta, para o filtro por cor.
+"""Tells which colors each wallpaper in a folder has, for the color filter.
 
-Uso: colors.py PASTA CACHE.json
+Usage: colors.py FOLDER CACHE.json
 
-Lê o que faltar (ou mudou) com o ImageMagick, guarda no CACHE e escreve na
-saída um JSON {nome do arquivo: [cores]}. As cores são: red, orange, yellow,
-green, teal, blue, purple, pink, dark, light, gray. Um wallpaper tem a cor
-dominante, a segunda se ela pesa quase tanto, e dark/light quando o fundo é
-escuro ou claro.
+Reads what is missing (or changed) with ImageMagick, keeps it in CACHE and
+prints a JSON {file name: [colors]}. The colors are: red, orange, yellow,
+green, teal, blue, purple, pink, dark, light, gray. A wallpaper gets its
+dominant color, the second one when it weighs almost as much, and dark/light
+when the background is dark or bright.
 """
 import colorsys
 import json
 import os
+import shutil
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
 
 EXT = (".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".jxl", ".avif", ".heif")
-HUES = [  # (até que matiz, em graus, nome)
+HUES = [  # (up to which hue, in degrees, name)
     (15, "red"), (45, "orange"), (70, "yellow"), (165, "green"),
     (200, "teal"), (255, "blue"), (300, "purple"), (345, "pink"), (361, "red"),
 ]
 SIZE = 48
+# ImageMagick 7 is `magick`; distros still on 6 only have `convert`.
+MAGICK = ["magick"] if shutil.which("magick") else ["convert"] if shutil.which("convert") else None
 
 
 def hue_name(h):
@@ -35,8 +38,8 @@ def hue_name(h):
 def analyse(path):
     try:
         raw = subprocess.run(
-            ["magick", "-define", f"jpeg:size={SIZE * 2}x{SIZE * 2}", path + "[0]",
-             "-resize", f"{SIZE}x{SIZE}!", "-depth", "8", "rgb:-"],
+            MAGICK + ["-define", f"jpeg:size={SIZE * 2}x{SIZE * 2}", path + "[0]",
+                      "-resize", f"{SIZE}x{SIZE}!", "-depth", "8", "rgb:-"],
             capture_output=True, timeout=90, env={**os.environ, "MAGICK_THREAD_LIMIT": "1"},
         ).stdout
     except (subprocess.TimeoutExpired, OSError):
@@ -72,6 +75,8 @@ def analyse(path):
 
 
 def main():
+    if MAGICK is None:
+        sys.exit("colors.py: ImageMagick (magick or convert) is not installed")
     folder, cache_path = sys.argv[1], sys.argv[2]
     try:
         with open(cache_path) as f:

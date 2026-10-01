@@ -19,7 +19,7 @@ Rectangle {
 
     implicitHeight: 40
     radius: height / 2
-    color: Qt.rgba(1, 1, 1, input.activeFocus ? 0.16 : 0.10)
+    color: Theme.withAlpha(Theme.surfaceText, input.activeFocus ? 0.16 : 0.10)
     border.width: input.activeFocus ? 2 : 0
     border.color: Theme.primary
 
@@ -27,7 +27,7 @@ Rectangle {
         id: glass
         name: "search"
         size: 20
-        color: "#F2F2F2"
+        color: Theme.surfaceText
         opacity: 0.7
         anchors.left: parent.left
         anchors.leftMargin: 14
@@ -41,7 +41,7 @@ Rectangle {
         anchors.right: parent.right
         anchors.rightMargin: 16
         anchors.verticalCenter: parent.verticalCenter
-        color: "#F2F2F2"
+        color: Theme.surfaceText
         selectionColor: Theme.primary
         selectedTextColor: Theme.onPrimary
         font.family: Theme.fontFamily
@@ -54,7 +54,7 @@ Rectangle {
         StyledText {
             visible: input.text === "" && !input.preeditText
             text: box.placeholder
-            color: "#F2F2F2"
+            color: Theme.surfaceText
             opacity: 0.45
             font.pixelSize: Theme.fontSizeMedium
             anchors.verticalCenter: parent.verticalCenter

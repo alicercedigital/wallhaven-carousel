@@ -28,6 +28,7 @@ FocusScope {
     property string pendingSelect: ""
     property var entries: []
     readonly property var current: (list.currentIndex >= 0 && list.currentIndex < entries.length) ? entries[list.currentIndex] : null
+    // The filter's own colors: each dot shows the color it filters by.
     readonly property var colorDefs: [
         {
             key: "red",
@@ -299,7 +300,7 @@ FocusScope {
 
             StyledText {
                 text: I18n.trFor("wallhavenCarousel", "Wallpapers")
-                color: "#F2F2F2"
+                color: Theme.surfaceText
                 font.pixelSize: Theme.fontSizeXLarge
                 font.weight: Font.Bold
             }
@@ -310,7 +311,7 @@ FocusScope {
                         parts.push(view.hub.cycleCountdown);
                     return parts.join(" · ");
                 }
-                color: "#F2F2F2"
+                color: Theme.surfaceText
                 opacity: 0.6
                 font.pixelSize: Theme.fontSizeSmall
             }
@@ -418,7 +419,7 @@ FocusScope {
                     color: modelData.hex
                     opacity: count === 0 && !picked ? 0.25 : 1
                     border.width: picked ? 3 : 1
-                    border.color: picked ? "#FFFFFF" : Qt.rgba(1, 1, 1, 0.3)
+                    border.color: picked ? Theme.surfaceText : Theme.withAlpha(Theme.surfaceText, 0.3)
                     scale: dotMouse.containsMouse || picked ? 1.12 : 1
 
                     Behavior on scale {
@@ -445,7 +446,7 @@ FocusScope {
                 verticalAlignment: Text.AlignVCenter
                 leftPadding: 4
                 rightPadding: 12
-                color: "#F2F2F2"
+                color: Theme.surfaceText
                 opacity: 0.7
                 font.pixelSize: Theme.fontSizeSmall
                 text: {
@@ -477,7 +478,7 @@ FocusScope {
                 height: 32
                 verticalAlignment: Text.AlignVCenter
                 leftPadding: 12
-                color: "#F2F2F2"
+                color: Theme.surfaceText
                 opacity: 0.45
                 font.pixelSize: Theme.fontSizeSmall
                 text: I18n.trFor("wallhavenCarousel", "Tags show up for wallpapers from Wallhaven.")
@@ -664,7 +665,7 @@ FocusScope {
 
                         Rectangle {
                             anchors.fill: parent
-                            color: "#1A1A1A"
+                            color: Theme.surfaceContainer
                         }
 
                         Image {
@@ -676,6 +677,8 @@ FocusScope {
                             cache: false
                         }
 
+                        // The star and the "in use" chip sit on the picture: dark with light
+                        // text on every theme, so they read over any wallpaper.
                         Rectangle {
                             id: star
                             x: view.skewPad + view.cardW + Math.abs(view.skew) * (view.cardH / 2 - 44) - width - 8
@@ -748,7 +751,7 @@ FocusScope {
     StyledText {
         anchors.centerIn: list
         visible: view.entries.length === 0
-        color: "#F2F2F2"
+        color: Theme.surfaceText
         opacity: 0.7
         font.pixelSize: Theme.fontSizeLarge
         text: view.favoritesOnly && view.colorFilter === "" && view.tagFilter === "" ? I18n.trFor("wallhavenCarousel", "No favorites yet. Press F on a wallpaper.") : view.anyFilter ? I18n.trFor("wallhavenCarousel", "Nothing matches these filters.") : I18n.trFor("wallhavenCarousel", "The folder is empty. Press A to download from Wallhaven.")
@@ -778,7 +781,7 @@ FocusScope {
                 elide: Text.ElideRight
                 horizontalAlignment: Text.AlignHCenter
                 text: view.confirmName !== "" ? I18n.trFor("wallhavenCarousel", "Move \"%1\" to the Trash?").arg(view.confirmName) : (view.current ? view.current.name : "")
-                color: "#F2F2F2"
+                color: Theme.surfaceText
                 font.pixelSize: Theme.fontSizeXLarge
                 font.weight: Font.Medium
             }
@@ -787,7 +790,7 @@ FocusScope {
                 anchors.horizontalCenter: parent.horizontalCenter
                 visible: view.current !== null
                 text: I18n.trFor("wallhavenCarousel", "%1 of %2").arg(list.currentIndex + 1).arg(list.count) + (view.currentIsFavorite ? " · " + I18n.trFor("wallhavenCarousel", "favorite") : "") + (view.current && view.current.name === view.hub.currentName ? " · " + I18n.trFor("wallhavenCarousel", "in use") : "")
-                color: "#F2F2F2"
+                color: Theme.surfaceText
                 opacity: 0.6
                 font.pixelSize: Theme.fontSizeMedium
             }
@@ -842,7 +845,7 @@ FocusScope {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
             text: I18n.trFor("wallhavenCarousel", "← → browse    Enter use    F favorite    Del delete    / search    C filters (, . color  T tag)    Tab favorites only    R favorites shuffle    A add    Esc close")
-            color: "#F2F2F2"
+            color: Theme.surfaceText
             opacity: 0.4
             font.pixelSize: Theme.fontSizeSmall
         }

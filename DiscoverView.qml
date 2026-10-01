@@ -235,7 +235,7 @@ FocusScope {
             anchors.leftMargin: 16
             anchors.verticalCenter: back.verticalCenter
             text: "Wallhaven"
-            color: "#F2F2F2"
+            color: Theme.surfaceText
             font.pixelSize: Theme.fontSizeXLarge
             font.weight: Font.Bold
         }
@@ -410,7 +410,7 @@ FocusScope {
                     visible: view.errorText !== "" && results.count > 0
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: view.errorText
-                    color: "#FFB4AB"
+                    color: Theme.error
                     font.pixelSize: Theme.fontSizeSmall
                 }
                 PillButton {
@@ -485,7 +485,7 @@ FocusScope {
                 anchors.fill: parent
                 anchors.margins: 5
                 radius: 10
-                color: "#1A1A1A"
+                color: Theme.surfaceContainer
                 border.width: cell.current ? 3 : 0
                 border.color: Theme.primary
 
@@ -497,6 +497,8 @@ FocusScope {
                     opacity: cell.busy ? 0.5 : 1
                 }
 
+                // Chips drawn on the picture stay dark with light text on every theme,
+                // so they read over any wallpaper.
                 Rectangle {
                     anchors.left: parent.left
                     anchors.bottom: parent.bottom
@@ -565,7 +567,7 @@ FocusScope {
     StyledText {
         anchors.centerIn: grid
         visible: results.count === 0
-        color: "#F2F2F2"
+        color: Theme.surfaceText
         opacity: 0.7
         font.pixelSize: Theme.fontSizeLarge
         horizontalAlignment: Text.AlignHCenter
@@ -585,7 +587,7 @@ FocusScope {
         anchors.rightMargin: 32
         width: view.detailW
         radius: 16
-        color: Qt.rgba(1, 1, 1, 0.06)
+        color: Theme.withAlpha(Theme.surfaceText, 0.06)
 
         MouseArea {
             anchors.fill: parent
@@ -601,7 +603,7 @@ FocusScope {
                 width: parent.width
                 height: Math.round(width * 0.62)
                 radius: 10
-                color: "#1A1A1A"
+                color: Theme.surfaceContainer
 
                 Image {
                     anchors.fill: parent
@@ -614,7 +616,7 @@ FocusScope {
             StyledText {
                 width: parent.width
                 text: view.selected ? view.selected.resolution + "  ·  " + view.megabytes(view.selected.size) + "  ·  " + view.selected.category : ""
-                color: "#F2F2F2"
+                color: Theme.surfaceText
                 font.pixelSize: Theme.fontSizeLarge
                 font.weight: Font.Medium
             }
@@ -622,7 +624,7 @@ FocusScope {
             StyledText {
                 width: parent.width
                 text: view.selected ? I18n.trFor("wallhavenCarousel", "%1 views  ·  %2 favorites on Wallhaven").arg(view.selected.views).arg(view.selected.favs) : ""
-                color: "#F2F2F2"
+                color: Theme.surfaceText
                 opacity: 0.6
                 font.pixelSize: Theme.fontSizeSmall
             }
@@ -638,7 +640,7 @@ FocusScope {
                         radius: 11
                         color: modelData
                         border.width: 1
-                        border.color: Qt.rgba(1, 1, 1, 0.25)
+                        border.color: Theme.withAlpha(Theme.surfaceText, 0.25)
                     }
                 }
             }
@@ -653,12 +655,12 @@ FocusScope {
                         height: 24
                         width: tagLabel.implicitWidth + 16
                         radius: 12
-                        color: Qt.rgba(1, 1, 1, 0.10)
+                        color: Theme.withAlpha(Theme.surfaceText, 0.10)
                         StyledText {
                             id: tagLabel
                             anchors.centerIn: parent
                             text: modelData
-                            color: "#F2F2F2"
+                            color: Theme.surfaceText
                             font.pixelSize: Theme.fontSizeSmall
                         }
                     }
@@ -711,7 +713,7 @@ FocusScope {
 
                 StyledText {
                     text: I18n.trFor("wallhavenCarousel", "Already in your folder.")
-                    color: "#F2F2F2"
+                    color: Theme.surfaceText
                     opacity: 0.7
                     font.pixelSize: Theme.fontSizeMedium
                 }
@@ -738,7 +740,7 @@ FocusScope {
             anchors.centerIn: parent
             visible: view.selected === null
             text: I18n.trFor("wallhavenCarousel", "Pick a wallpaper")
-            color: "#F2F2F2"
+            color: Theme.surfaceText
             opacity: 0.5
             font.pixelSize: Theme.fontSizeMedium
         }

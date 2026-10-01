@@ -16,12 +16,12 @@ Rectangle {
 
     signal clicked
 
-    readonly property color fg: active ? Theme.onPrimary : danger ? "#FFB4AB" : "#F2F2F2"
+    readonly property color fg: active ? Theme.onPrimary : danger ? Theme.error : Theme.surfaceText
 
     implicitHeight: 40
     implicitWidth: row.implicitWidth + 28
     radius: height / 2
-    color: active ? Theme.primary : Qt.rgba(1, danger ? 0.35 : 1, danger ? 0.35 : 1, mouse.containsMouse ? 0.22 : 0.10)
+    color: active ? Theme.primary : Theme.withAlpha(danger ? Theme.error : Theme.surfaceText, mouse.containsMouse ? 0.22 : 0.10)
     opacity: busy ? 0.6 : 1
 
     Behavior on color {

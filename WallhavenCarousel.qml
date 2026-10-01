@@ -563,9 +563,10 @@ PluginComponent {
             bottom: true
         }
 
+        // The backdrop: the theme's background, nearly opaque.
         Rectangle {
             anchors.fill: parent
-            color: "#F0000000"
+            color: Theme.withAlpha(Theme.background, 0.94)
             opacity: overlay.visible ? 1 : 0
             Behavior on opacity {
                 NumberAnimation {

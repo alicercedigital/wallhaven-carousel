@@ -1,7 +1,7 @@
 {
     "id": "wallhavenCarousel",
     "name": "Wallhaven Carousel",
-    "description": "Skewed fullscreen carousel of your wallpaper folder with favorites, a favorites-only shuffle, color and tag filters, Trash, and Wallhaven search and download built in",
+    "description": "Fullscreen skewed carousel of your wallpaper folder, plus favorites, a shuffle among favorites only, color and tag filters, delete to Trash, and Wallhaven search and download in the same overlay",
     "version": "1.0.0",
     "author": "dretz",
     "icon": "wallpaper",

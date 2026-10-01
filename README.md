@@ -5,7 +5,7 @@
 **Pick, favorite, filter and download wallpapers without leaving [DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell).**
 
 A fullscreen skewed carousel of your wallpaper folder, with favorites, color and tag filters,<br>
-a shuffle that only picks favorites, and Wallhaven search and download in the same overlay.
+a shuffle that only picks favorites, and Wallhaven search, full-size preview and download in the same overlay.
 
 [![DMS 1.6.0+](https://img.shields.io/badge/DMS-1.6.0%2B-8E4EC6?style=flat-square)](https://github.com/AvengeMedia/DankMaterialShell)
 [![Wallhaven SFW](https://img.shields.io/badge/Wallhaven-SFW-E6B325?style=flat-square)](https://wallhaven.cc)
@@ -48,6 +48,10 @@ The wallpaper you are using carries an "in use" badge, and the carousel opens ce
 | `D` | Download only | Adds it to the folder for later |
 
 Downloads are named `wallhaven-<id>.<ext>`. Each one goes to a `.part` file and is renamed when complete, so the carousel never shows half an image.
+
+### See it full size before you download
+
+`Space`, a double click on a result, or a click on the picture in the side panel opens the wallpaper full screen. A small copy shows at once, and the original fades in over it, with a progress bar while it loads. `Tab`, or a click on the picture, switches between the whole picture and filling the screen the way it would sit as your wallpaper. The arrow keys and the wheel go to the next or previous result, `Enter`, `F` and `D` download from there, and `Esc` goes back to the results.
 
 ## Delete to the Trash
 
@@ -108,7 +112,7 @@ In the carousel:
 | `A` | Wallhaven search |
 | `Esc` | Clear the search, then the filters, then close |
 
-In Wallhaven search, the arrow keys move through the results, `/` jumps to the search field, `Enter`, `F` and `D` download as in the table above, and `Esc` goes back to the carousel.
+In Wallhaven search, the arrow keys move through the results, `Space` opens the full-size preview, `/` jumps to the search field, `Enter`, `F` and `D` download as in the table above, and `Esc` goes back to the carousel.
 
 ## IPC
 

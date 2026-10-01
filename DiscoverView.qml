@@ -40,8 +40,65 @@ FocusScope {
     property string detailFor: ""
     property var detail: ({})
 
+    // The preview: the selected wallpaper at full size, before downloading.
+    property bool previewing: false
+    property bool previewFill: false
+    readonly property var previewSize: {
+        const m = /^(\d+)x(\d+)$/.exec(selected ? selected.resolution : "");
+        return m ? {
+            w: Number(m[1]),
+            h: Number(m[2])
+        } : {
+            w: 16,
+            h: 9
+        };
+    }
+
     function focusGrid() {
+        previewing = false;
         grid.forceActiveFocus();
+    }
+
+    function openPreview() {
+        if (!selected)
+            return;
+        previewing = true;
+        preview.forceActiveFocus();
+    }
+
+    function closePreview() {
+        previewing = false;
+        grid.forceActiveFocus();
+    }
+
+    function step(delta) {
+        const i = Math.max(0, Math.min(results.count - 1, grid.currentIndex + delta));
+        if (i !== grid.currentIndex) {
+            grid.currentIndex = i;
+            grid.positionViewAtIndex(i, GridView.Contain);
+        }
+    }
+
+    // Enter, F and D do the same in the grid and in the preview.
+    function act(key) {
+        if (!selected)
+            return false;
+        if (key === Qt.Key_Return || key === Qt.Key_Enter) {
+            if (selectedInLibrary)
+                hub.apply(selected.fileName);
+            else
+                downloadSelected(true, false);
+        } else if (key === Qt.Key_F) {
+            if (selectedInLibrary)
+                hub.toggleFavorite(selected.fileName);
+            else
+                downloadSelected(true, true);
+        } else if (key === Qt.Key_D) {
+            downloadSelected(false, false);
+        } else {
+            return false;
+        }
+        return true;
     }
 
     function enter() {
@@ -148,6 +205,8 @@ FocusScope {
             results.append({
                 wid: String(it.id),
                 thumb: String((it.thumbs && (it.thumbs.large || it.thumbs.small)) || it.path),
+                // "large" is always cropped to 16:9; "original" keeps the shape.
+                shape: String((it.thumbs && it.thumbs.original) || it.path),
                 full: String(it.path),
                 resolution: String(it.resolution || ""),
                 size: Number(it.file_size || 0),
@@ -181,6 +240,8 @@ FocusScope {
     onSelectedChanged: {
         if (selected)
             fetchDetail(selected.wid);
+        else if (previewing)
+            closePreview();
     }
 
     function item() {
@@ -439,19 +500,12 @@ FocusScope {
             switch (event.key) {
             case Qt.Key_Return:
             case Qt.Key_Enter:
-                if (view.selectedInLibrary)
-                    view.hub.apply(view.selected.fileName);
-                else
-                    view.downloadSelected(true, false);
-                break;
             case Qt.Key_F:
-                if (view.selectedInLibrary)
-                    view.hub.toggleFavorite(view.selected.fileName);
-                else
-                    view.downloadSelected(true, true);
-                break;
             case Qt.Key_D:
-                view.downloadSelected(false, false);
+                view.act(event.key);
+                break;
+            case Qt.Key_Space:
+                view.openPreview();
                 break;
             case Qt.Key_Slash:
                 searchBox.focusInput();
@@ -559,6 +613,10 @@ FocusScope {
                         grid.currentIndex = cell.index;
                         grid.forceActiveFocus();
                     }
+                    onDoubleClicked: {
+                        grid.currentIndex = cell.index;
+                        view.openPreview();
+                    }
                 }
             }
         }
@@ -610,6 +668,33 @@ FocusScope {
                     source: view.selected ? view.selected.thumb : ""
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
+                }
+
+                // On the picture, so dark with light text on every theme.
+                Rectangle {
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    anchors.margins: 10
+                    width: 36
+                    height: 36
+                    radius: 18
+                    color: Qt.rgba(0, 0, 0, 0.6)
+                    opacity: thumbMouse.containsMouse ? 1 : 0.7
+
+                    DankIcon {
+                        anchors.centerIn: parent
+                        name: "open_in_full"
+                        size: 20
+                        color: "#F2F2F2"
+                    }
+                }
+
+                MouseArea {
+                    id: thumbMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: view.openPreview()
                 }
             }
 
@@ -670,6 +755,14 @@ FocusScope {
             Item {
                 width: 1
                 height: 4
+            }
+
+            PillButton {
+                width: parent.width
+                icon: "open_in_full"
+                label: I18n.trFor("wallhavenCarousel", "View larger")
+                hint: I18n.trFor("wallhavenCarousel", "Space")
+                onClicked: view.openPreview()
             }
 
             // Not in the folder yet: download.
@@ -743,6 +836,231 @@ FocusScope {
             color: Theme.surfaceText
             opacity: 0.5
             font.pixelSize: Theme.fontSizeMedium
+        }
+    }
+
+    // ── Preview ───────────────────────────────────────────────────────────
+    // A small copy shows at once and the original fades in over it. The
+    // original is decoded once, at most twice the screen width; fit and fill
+    // only resize the item, so switching never downloads it again.
+    FocusScope {
+        id: preview
+        anchors.fill: parent
+        visible: view.previewing
+        z: 10
+
+        Rectangle {
+            anchors.fill: parent
+            color: Theme.withAlpha(Theme.background, 0.97)
+        }
+
+        // A click outside the picture and the buttons closes.
+        MouseArea {
+            anchors.fill: parent
+            onClicked: view.closePreview()
+        }
+
+        WheelHandler {
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+            onWheel: event => view.step(event.angleDelta.y + event.angleDelta.x > 0 ? -1 : 1)
+        }
+
+        Item {
+            id: stage
+            anchors.fill: parent
+            anchors.topMargin: view.previewFill ? 0 : 32
+            anchors.leftMargin: view.previewFill ? 0 : 32
+            anchors.rightMargin: view.previewFill ? 0 : 32
+            anchors.bottomMargin: view.previewFill ? 0 : 170
+            clip: true
+
+            Item {
+                id: picture
+                readonly property real aspect: view.previewSize.w / view.previewSize.h
+                anchors.centerIn: parent
+                width: view.previewFill ? Math.max(stage.width, stage.height * aspect) : Math.min(stage.width, stage.height * aspect)
+                height: width / aspect
+
+                Image {
+                    anchors.fill: parent
+                    source: view.previewing && view.selected ? view.selected.shape : ""
+                    asynchronous: true
+                    visible: full.status !== Image.Ready
+                }
+
+                Image {
+                    id: full
+                    anchors.fill: parent
+                    source: view.previewing && view.selected ? view.selected.full : ""
+                    sourceSize.width: Math.min(view.previewSize.w, Math.round(preview.width * 2))
+                    asynchronous: true
+                    cache: false
+                    opacity: status === Image.Ready ? 1 : 0
+
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: 180
+                        }
+                    }
+                }
+
+                // A click on the picture switches between fit and fill.
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: view.previewFill = !view.previewFill
+                }
+            }
+        }
+
+        Rectangle {
+            anchors.top: parent.top
+            anchors.left: parent.left
+            height: 3
+            width: parent.width * full.progress
+            color: Theme.primary
+            visible: full.status === Image.Loading
+        }
+
+        // In fill mode the picture runs under the controls; this keeps them
+        // readable.
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: 240
+            visible: view.previewFill
+            gradient: Gradient {
+                GradientStop {
+                    position: 0
+                    color: "transparent"
+                }
+                GradientStop {
+                    position: 1
+                    color: Theme.withAlpha(Theme.background, 0.9)
+                }
+            }
+        }
+
+        Item {
+            id: previewKeys
+            focus: true
+
+            Keys.onPressed: event => {
+                if (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))
+                    return;
+                event.accepted = true;
+                switch (event.key) {
+                case Qt.Key_Left:
+                case Qt.Key_H:
+                    view.step(-1);
+                    break;
+                case Qt.Key_Right:
+                case Qt.Key_L:
+                    view.step(1);
+                    break;
+                case Qt.Key_Tab:
+                    view.previewFill = !view.previewFill;
+                    break;
+                case Qt.Key_Space:
+                case Qt.Key_Escape:
+                    view.closePreview();
+                    break;
+                default:
+                    event.accepted = view.act(event.key);
+                }
+            }
+        }
+
+        Column {
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 28
+            spacing: 10
+
+            StyledText {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: {
+                    if (!view.selected)
+                        return "";
+                    const info = view.selected.resolution + "  ·  " + view.megabytes(view.selected.size) + "  ·  " + view.selected.category;
+                    if (full.status === Image.Loading)
+                        return info + "  ·  " + I18n.trFor("wallhavenCarousel", "loading the full size… %1%").arg(Math.round(full.progress * 100));
+                    if (full.status === Image.Error)
+                        return info + "  ·  " + I18n.trFor("wallhavenCarousel", "couldn't load the full size");
+                    return info;
+                }
+                color: Theme.surfaceText
+                font.pixelSize: Theme.fontSizeLarge
+                font.weight: Font.Medium
+            }
+
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: 10
+
+                PillButton {
+                    visible: !view.selectedInLibrary
+                    icon: "download"
+                    label: view.selectedBusy ? I18n.trFor("wallhavenCarousel", "Downloading…") : I18n.trFor("wallhavenCarousel", "Download and use")
+                    hint: "Enter"
+                    active: true
+                    busy: view.selectedBusy
+                    onClicked: view.downloadSelected(true, false)
+                }
+                PillButton {
+                    visible: !view.selectedInLibrary
+                    icon: "star"
+                    label: I18n.trFor("wallhavenCarousel", "Download, use and favorite")
+                    hint: "F"
+                    busy: view.selectedBusy
+                    onClicked: view.downloadSelected(true, true)
+                }
+                PillButton {
+                    visible: !view.selectedInLibrary
+                    icon: "download"
+                    label: I18n.trFor("wallhavenCarousel", "Download only")
+                    hint: "D"
+                    busy: view.selectedBusy
+                    onClicked: view.downloadSelected(false, false)
+                }
+                PillButton {
+                    visible: view.selectedInLibrary
+                    icon: "wallpaper"
+                    label: I18n.trFor("wallhavenCarousel", "Use")
+                    hint: "Enter"
+                    active: true
+                    onClicked: view.hub.apply(view.selected.fileName)
+                }
+                PillButton {
+                    visible: view.selectedInLibrary
+                    icon: "star"
+                    filledIcon: view.selectedIsFavorite
+                    label: view.selectedIsFavorite ? I18n.trFor("wallhavenCarousel", "Unfavorite") : I18n.trFor("wallhavenCarousel", "Favorite")
+                    hint: "F"
+                    onClicked: view.hub.toggleFavorite(view.selected.fileName)
+                }
+                PillButton {
+                    icon: view.previewFill ? "fit_screen" : "fullscreen"
+                    label: I18n.trFor("wallhavenCarousel", "Fill the screen")
+                    hint: "Tab"
+                    active: view.previewFill
+                    onClicked: view.previewFill = !view.previewFill
+                }
+                PillButton {
+                    icon: "close"
+                    hint: "Esc"
+                    onClicked: view.closePreview()
+                }
+            }
+
+            StyledText {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: I18n.trFor("wallhavenCarousel", "← → previous and next    Tab or a click on the picture: fit or fill    Esc close")
+                color: Theme.surfaceText
+                opacity: 0.45
+                font.pixelSize: Theme.fontSizeSmall
+            }
         }
     }
 }

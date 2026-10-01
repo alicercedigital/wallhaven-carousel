@@ -62,6 +62,9 @@
   "color": {
     "color": "cor"
   },
+  "couldn't load the full size": {
+    "couldn't load the full size": "não consegui carregar o tamanho original"
+  },
   "Couldn't move it to the Trash": {
     "Couldn't move it to the Trash": "Não consegui mandar para a lixeira"
   },
@@ -110,6 +113,9 @@
   "Favorites shuffle: on": {
     "Favorites shuffle: on": "Aleatório dos favoritos: ligado"
   },
+  "Fill the screen": {
+    "Fill the screen": "Preencher a tela"
+  },
   "Filter by name or tag": {
     "Filter by name or tag": "Filtrar pelo nome ou etiqueta"
   },
@@ -139,6 +145,9 @@
   },
   "Load more": {
     "Load more": "Carregar mais"
+  },
+  "loading the full size… %1%": {
+    "loading the full size… %1%": "carregando o tamanho original… %1%"
   },
   "Loading…": {
     "Loading…": "Carregando…"
@@ -212,6 +221,9 @@
   "Shuffle favorites every": {
     "Shuffle favorites every": "Trocar entre os favoritos a cada"
   },
+  "Space": {
+    "Space": "Espaço"
+  },
   "Tags show up for wallpapers from Wallhaven.": {
     "Tags show up for wallpapers from Wallhaven.": "Etiquetas aparecem para o que vem do Wallhaven."
   },
@@ -232,6 +244,9 @@
   },
   "Use": {
     "Use": "Usar"
+  },
+  "View larger": {
+    "View larger": "Ver maior"
   },
   "Wallhaven answered with an error (HTTP %1).": {
     "Wallhaven answered with an error (HTTP %1).": "O Wallhaven respondeu com erro (HTTP %1)."
@@ -256,5 +271,8 @@
   },
   "← → browse    Enter use    F favorite    Del delete    / search    C filters (, . color  T tag)    Tab favorites only    R favorites shuffle    A add    Esc close": {
     "← → browse    Enter use    F favorite    Del delete    / search    C filters (, . color  T tag)    Tab favorites only    R favorites shuffle    A add    Esc close": "← → navegar    Enter usar    F favorito    Del excluir    / buscar    C filtros (, . cor  T etiqueta)    Tab só favoritos    R aleatório dos favoritos    A adicionar    Esc fechar"
+  },
+  "← → previous and next    Tab or a click on the picture: fit or fill    Esc close": {
+    "← → previous and next    Tab or a click on the picture: fit or fill    Esc close": "← → anterior e próximo    Tab ou clique na imagem: inteira ou preenchendo    Esc fechar"
   }
 }

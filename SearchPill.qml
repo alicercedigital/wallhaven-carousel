@@ -2,62 +2,33 @@ import QtQuick
 import qs.Common
 import qs.Widgets
 
-// A search field on the overlay's dark backdrop.
-Rectangle {
+// DMS's text field as a pill with a search icon. Escape, which the field
+// leaves alone, reaches this item and becomes `escaped`.
+Item {
     id: box
 
-    property alias text: input.text
+    property alias text: field.text
     property string placeholder: ""
 
     signal accepted
     signal escaped
 
     function focusInput() {
-        input.forceActiveFocus();
-        input.selectAll();
+        field.forceActiveFocus();
+        field.selectAll();
     }
 
-    implicitHeight: 40
-    radius: height / 2
-    color: Theme.withAlpha(Theme.surfaceText, input.activeFocus ? 0.16 : 0.10)
-    border.width: input.activeFocus ? 2 : 0
-    border.color: Theme.primary
+    implicitHeight: field.height
+    Keys.onEscapePressed: box.escaped()
 
-    DankIcon {
-        id: glass
-        name: "search"
-        size: 20
-        color: Theme.surfaceText
-        opacity: 0.7
-        anchors.left: parent.left
-        anchors.leftMargin: 14
+    DankTextField {
+        id: field
+        width: parent.width
         anchors.verticalCenter: parent.verticalCenter
-    }
-
-    TextInput {
-        id: input
-        anchors.left: glass.right
-        anchors.leftMargin: 10
-        anchors.right: parent.right
-        anchors.rightMargin: 16
-        anchors.verticalCenter: parent.verticalCenter
-        color: Theme.surfaceText
-        selectionColor: Theme.primary
-        selectedTextColor: Theme.onPrimary
-        font.family: Theme.fontFamily
-        font.pixelSize: Theme.fontSizeMedium
-        selectByMouse: true
-        clip: true
+        leftIconName: "search"
+        leftIconSize: Theme.iconSize - 4
+        placeholderText: box.placeholder
+        cornerRadius: height / 2
         onAccepted: box.accepted()
-        Keys.onEscapePressed: box.escaped()
-
-        StyledText {
-            visible: input.text === "" && !input.preeditText
-            text: box.placeholder
-            color: Theme.surfaceText
-            opacity: 0.45
-            font.pixelSize: Theme.fontSizeMedium
-            anchors.verticalCenter: parent.verticalCenter
-        }
     }
 }

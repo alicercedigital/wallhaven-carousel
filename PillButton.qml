@@ -18,8 +18,8 @@ Rectangle {
 
     readonly property color fg: active ? Theme.onPrimary : danger ? Theme.error : Theme.surfaceText
 
-    implicitHeight: 40
-    implicitWidth: row.implicitWidth + 28
+    implicitHeight: Theme.iconSize + Theme.spacingL
+    implicitWidth: row.implicitWidth + Theme.spacingL * 2
     radius: height / 2
     color: active ? Theme.primary : Theme.withAlpha(danger ? Theme.error : Theme.surfaceText, mouse.containsMouse ? 0.22 : 0.10)
     opacity: busy ? 0.6 : 1
@@ -33,12 +33,12 @@ Rectangle {
     Row {
         id: row
         anchors.centerIn: parent
-        spacing: 8
+        spacing: Theme.spacingS
 
         DankIcon {
             visible: btn.icon !== ""
             name: btn.icon
-            size: 20
+            size: Theme.iconSize - 4
             filled: btn.filledIcon
             color: btn.fg
             anchors.verticalCenter: parent.verticalCenter

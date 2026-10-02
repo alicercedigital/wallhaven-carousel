@@ -287,7 +287,7 @@ FocusScope {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.margins: 32
+        anchors.margins: Theme.spacingL * 2
         height: 64
 
         MouseArea {
@@ -296,7 +296,7 @@ FocusScope {
 
         Column {
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 2
+            spacing: Theme.spacingXXS
 
             StyledText {
                 text: I18n.trFor("wallhavenCarousel", "Wallpapers")
@@ -331,7 +331,7 @@ FocusScope {
         Row {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 10
+            spacing: Theme.spacingM
 
             PillButton {
                 icon: "search"
@@ -386,9 +386,9 @@ FocusScope {
         anchors.top: topBar.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.leftMargin: 32
-        anchors.rightMargin: 32
-        height: view.filtersOpen ? filterFlow.implicitHeight + 12 : 0
+        anchors.leftMargin: Theme.spacingL * 2
+        anchors.rightMargin: Theme.spacingL * 2
+        height: view.filtersOpen ? filterFlow.implicitHeight + Theme.spacingM : 0
         clip: true
 
         Behavior on height {
@@ -404,7 +404,7 @@ FocusScope {
         Flow {
             id: filterFlow
             width: parent.width
-            spacing: 8
+            spacing: Theme.spacingS
 
             Repeater {
                 model: view.colorDefs
@@ -413,9 +413,9 @@ FocusScope {
                     required property var modelData
                     readonly property int count: view.colorCounts[modelData.key] || 0
                     readonly property bool picked: view.colorFilter === modelData.key
-                    width: 32
-                    height: 32
-                    radius: 16
+                    width: Theme.iconSize + Theme.spacingS
+                    height: Theme.iconSize + Theme.spacingS
+                    radius: height / 2
                     color: modelData.hex
                     opacity: count === 0 && !picked ? 0.25 : 1
                     border.width: picked ? 3 : 1
@@ -442,10 +442,10 @@ FocusScope {
             }
 
             StyledText {
-                height: 32
+                height: Theme.iconSize + Theme.spacingS
                 verticalAlignment: Text.AlignVCenter
-                leftPadding: 4
-                rightPadding: 12
+                leftPadding: Theme.spacingXS
+                rightPadding: Theme.spacingM
                 color: Theme.surfaceText
                 opacity: 0.7
                 font.pixelSize: Theme.fontSizeSmall
@@ -462,7 +462,7 @@ FocusScope {
                 model: view.topTags
                 delegate: PillButton {
                     required property var modelData
-                    implicitHeight: 32
+                    implicitHeight: Theme.iconSize + Theme.spacingS
                     label: modelData.tag
                     hint: String(modelData.count)
                     active: view.tagFilter === modelData.tag
@@ -475,9 +475,9 @@ FocusScope {
 
             StyledText {
                 visible: view.topTags.length === 0
-                height: 32
+                height: Theme.iconSize + Theme.spacingS
                 verticalAlignment: Text.AlignVCenter
-                leftPadding: 12
+                leftPadding: Theme.spacingM
                 color: Theme.surfaceText
                 opacity: 0.45
                 font.pixelSize: Theme.fontSizeSmall
@@ -486,7 +486,7 @@ FocusScope {
 
             PillButton {
                 visible: view.colorFilter !== "" || view.tagFilter !== ""
-                implicitHeight: 32
+                implicitHeight: Theme.iconSize + Theme.spacingS
                 icon: "close"
                 label: I18n.trFor("wallhavenCarousel", "Clear")
                 onClicked: {
@@ -499,14 +499,15 @@ FocusScope {
     }
 
     // ── Carousel ──────────────────────────────────────────────────────────
-    ListView {
+    DankListView {
         id: list
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: filterBar.bottom
         anchors.bottom: bottomBar.top
         orientation: ListView.Horizontal
-        spacing: 10
+        flickableDirection: Flickable.HorizontalFlick
+        spacing: Theme.spacingS
         model: shown
         clip: false
         cacheBuffer: view.cardW * 8
@@ -516,16 +517,6 @@ FocusScope {
         preferredHighlightEnd: width / 2 + view.cardW / 2
         highlightMoveDuration: 220
         focus: true
-
-        WheelHandler {
-            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-            onWheel: event => {
-                if (event.angleDelta.y + event.angleDelta.x > 0)
-                    list.decrementCurrentIndex();
-                else
-                    list.incrementCurrentIndex();
-            }
-        }
 
         Keys.onPressed: event => {
             if (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))
@@ -681,18 +672,18 @@ FocusScope {
                         // text on every theme, so they read over any wallpaper.
                         Rectangle {
                             id: star
-                            x: view.skewPad + view.cardW + Math.abs(view.skew) * (view.cardH / 2 - 44) - width - 8
-                            y: 10
-                            width: 34
-                            height: 34
-                            radius: 17
+                            x: view.skewPad + view.cardW + Math.abs(view.skew) * (view.cardH / 2 - y - height) - width - Theme.spacingS
+                            y: Theme.spacingS
+                            width: Theme.iconSize + Theme.spacingS
+                            height: Theme.iconSize + Theme.spacingS
+                            radius: height / 2
                             color: card.isFavorite ? Theme.primary : Qt.rgba(0, 0, 0, 0.45)
                             visible: card.isFavorite || card.isCurrent || mouse.containsMouse
 
                             DankIcon {
                                 anchors.centerIn: parent
                                 name: "star"
-                                size: 20
+                                size: Theme.iconSize - 4
                                 filled: card.isFavorite
                                 color: card.isFavorite ? Theme.onPrimary : "#F2F2F2"
                             }
@@ -705,11 +696,11 @@ FocusScope {
                         }
 
                         Rectangle {
-                            x: view.skewPad + Math.abs(view.skew) * (view.cardH / 2 - 10) + 10
-                            y: 10
-                            height: 26
-                            width: inUseLabel.implicitWidth + 20
-                            radius: 13
+                            x: view.skewPad + Math.abs(view.skew) * (view.cardH / 2 - y) + Theme.spacingS
+                            y: Theme.spacingS
+                            height: Theme.iconSize
+                            width: inUseLabel.implicitWidth + Theme.spacingL
+                            radius: height / 2
                             color: Qt.rgba(0, 0, 0, 0.55)
                             visible: card.inUse
 
@@ -748,6 +739,23 @@ FocusScope {
         }
     }
 
+    // DankListView's wheel handler scrolls vertically and takes the event;
+    // this layer above it gets the wheel first and steps the carousel.
+    // Clicks and hover pass through to the cards.
+    Item {
+        anchors.fill: list
+
+        WheelHandler {
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+            onWheel: event => {
+                if (event.angleDelta.y + event.angleDelta.x > 0)
+                    list.decrementCurrentIndex();
+                else
+                    list.incrementCurrentIndex();
+            }
+        }
+    }
+
     StyledText {
         anchors.centerIn: list
         visible: view.entries.length === 0
@@ -763,7 +771,7 @@ FocusScope {
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.margins: 32
+        anchors.margins: Theme.spacingL * 2
         height: 150
 
         MouseArea {
@@ -773,7 +781,7 @@ FocusScope {
         Column {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.top: parent.top
-            spacing: 6
+            spacing: Theme.spacingS
 
             StyledText {
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -797,8 +805,8 @@ FocusScope {
 
             Row {
                 anchors.horizontalCenter: parent.horizontalCenter
-                spacing: 10
-                topPadding: 8
+                spacing: Theme.spacingM
+                topPadding: Theme.spacingS
 
                 PillButton {
                     visible: view.confirmName === "" && view.current !== null

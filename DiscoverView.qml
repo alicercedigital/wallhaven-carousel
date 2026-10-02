@@ -276,7 +276,7 @@ FocusScope {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.margins: 32
+        anchors.margins: Theme.spacingL * 2
         height: 112
 
         MouseArea {
@@ -293,7 +293,7 @@ FocusScope {
 
         StyledText {
             anchors.left: back.right
-            anchors.leftMargin: 16
+            anchors.leftMargin: Theme.spacingL
             anchors.verticalCenter: back.verticalCenter
             text: "Wallhaven"
             color: Theme.surfaceText
@@ -319,7 +319,7 @@ FocusScope {
         Row {
             anchors.right: parent.right
             anchors.verticalCenter: back.verticalCenter
-            spacing: 10
+            spacing: Theme.spacingM
 
             PillButton {
                 icon: "close"
@@ -332,7 +332,7 @@ FocusScope {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            spacing: 8
+            spacing: Theme.spacingS
 
             Repeater {
                 model: [
@@ -351,7 +351,7 @@ FocusScope {
                 ]
                 delegate: PillButton {
                     required property var modelData
-                    implicitHeight: 32
+                    implicitHeight: Theme.iconSize + Theme.spacingS
                     label: modelData.label
                     active: view.categories[modelData.i] === "1"
                     onClicked: view.toggleCategory(modelData.i)
@@ -359,7 +359,7 @@ FocusScope {
             }
 
             Item {
-                width: 16
+                width: Theme.spacingL
                 height: 1
             }
 
@@ -392,7 +392,7 @@ FocusScope {
                 ]
                 delegate: PillButton {
                     required property var modelData
-                    implicitHeight: 32
+                    implicitHeight: Theme.iconSize + Theme.spacingS
                     label: modelData.label
                     active: view.sorting === modelData.v
                     onClicked: {
@@ -403,7 +403,7 @@ FocusScope {
             }
 
             Item {
-                width: 16
+                width: Theme.spacingL
                 height: 1
             }
 
@@ -428,7 +428,7 @@ FocusScope {
                 ]
                 delegate: PillButton {
                     required property var modelData
-                    implicitHeight: 32
+                    implicitHeight: Theme.iconSize + Theme.spacingS
                     label: modelData.label
                     active: view.atleast === modelData.v
                     onClicked: {
@@ -441,16 +441,16 @@ FocusScope {
     }
 
     // ── Results grid ──────────────────────────────────────────────────────
-    GridView {
+    DankGridView {
         id: grid
         anchors.top: head.bottom
-        anchors.topMargin: 16
+        anchors.topMargin: Theme.spacingL
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: 32
+        anchors.bottomMargin: Theme.spacingL * 2
         anchors.left: parent.left
-        anchors.leftMargin: 32
+        anchors.leftMargin: Theme.spacingL * 2
         anchors.right: detailPanel.left
-        anchors.rightMargin: 24
+        anchors.rightMargin: Theme.spacingXL
         clip: true
         focus: true
         model: results
@@ -460,12 +460,13 @@ FocusScope {
 
         footer: Item {
             width: grid.width
-            height: view.page < view.lastPage || view.errorText !== "" ? 96 : 24
+            height: view.page < view.lastPage || view.errorText !== "" ? more.implicitHeight + Theme.spacingXL * 2 : Theme.spacingXL
 
             Column {
+                id: more
                 visible: view.page < view.lastPage || view.errorText !== ""
                 anchors.centerIn: parent
-                spacing: 8
+                spacing: Theme.spacingS
 
                 StyledText {
                     visible: view.errorText !== "" && results.count > 0
@@ -537,8 +538,8 @@ FocusScope {
 
             ClippingRectangle {
                 anchors.fill: parent
-                anchors.margins: 5
-                radius: 10
+                anchors.margins: Theme.spacingXS
+                radius: Theme.cornerRadius
                 color: Theme.surfaceContainer
                 border.width: cell.current ? 3 : 0
                 border.color: Theme.primary
@@ -556,10 +557,10 @@ FocusScope {
                 Rectangle {
                     anchors.left: parent.left
                     anchors.bottom: parent.bottom
-                    anchors.margins: 8
-                    height: 22
-                    width: resLabel.implicitWidth + 16
-                    radius: 11
+                    anchors.margins: Theme.spacingS
+                    height: Theme.iconSize - 2
+                    width: resLabel.implicitWidth + Theme.spacingL
+                    radius: height / 2
                     color: Qt.rgba(0, 0, 0, 0.6)
 
                     StyledText {
@@ -574,33 +575,33 @@ FocusScope {
                 Row {
                     anchors.right: parent.right
                     anchors.top: parent.top
-                    anchors.margins: 8
-                    spacing: 6
+                    anchors.margins: Theme.spacingS
+                    spacing: Theme.spacingS
 
                     Rectangle {
                         visible: cell.fav
-                        width: 26
-                        height: 26
-                        radius: 13
+                        width: Theme.iconSize
+                        height: Theme.iconSize
+                        radius: height / 2
                         color: Theme.primary
                         DankIcon {
                             anchors.centerIn: parent
                             name: "star"
                             filled: true
-                            size: 16
+                            size: Theme.iconSizeSmall
                             color: Theme.onPrimary
                         }
                     }
                     Rectangle {
                         visible: cell.inLibrary || cell.busy
-                        width: 26
-                        height: 26
-                        radius: 13
+                        width: Theme.iconSize
+                        height: Theme.iconSize
+                        radius: height / 2
                         color: Qt.rgba(0, 0, 0, 0.6)
                         DankIcon {
                             anchors.centerIn: parent
                             name: cell.busy ? "downloading" : "check_circle"
-                            size: 18
+                            size: Theme.iconSize - 6
                             color: "#F2F2F2"
                         }
                     }
@@ -629,7 +630,7 @@ FocusScope {
         opacity: 0.7
         font.pixelSize: Theme.fontSizeLarge
         horizontalAlignment: Text.AlignHCenter
-        width: grid.width - 48
+        width: grid.width - Theme.spacingXL * 2
         wrapMode: Text.WordWrap
         text: view.errorText !== "" ? view.errorText : view.loading ? I18n.trFor("wallhavenCarousel", "Searching…") : I18n.trFor("wallhavenCarousel", "Nothing found.")
     }
@@ -638,13 +639,13 @@ FocusScope {
     Rectangle {
         id: detailPanel
         anchors.top: head.bottom
-        anchors.topMargin: 16
+        anchors.topMargin: Theme.spacingL
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: 32
+        anchors.bottomMargin: Theme.spacingL * 2
         anchors.right: parent.right
-        anchors.rightMargin: 32
+        anchors.rightMargin: Theme.spacingL * 2
         width: view.detailW
-        radius: 16
+        radius: Theme.cornerRadius
         color: Theme.withAlpha(Theme.surfaceText, 0.06)
 
         MouseArea {
@@ -654,13 +655,13 @@ FocusScope {
         Column {
             visible: view.selected !== null
             anchors.fill: parent
-            anchors.margins: 20
-            spacing: 14
+            anchors.margins: Theme.spacingL
+            spacing: Theme.spacingM
 
             ClippingRectangle {
                 width: parent.width
                 height: Math.round(width * 0.62)
-                radius: 10
+                radius: Theme.cornerRadius
                 color: Theme.surfaceContainer
 
                 Image {
@@ -674,17 +675,17 @@ FocusScope {
                 Rectangle {
                     anchors.right: parent.right
                     anchors.bottom: parent.bottom
-                    anchors.margins: 10
-                    width: 36
-                    height: 36
-                    radius: 18
+                    anchors.margins: Theme.spacingM
+                    width: Theme.iconSize + Theme.spacingM
+                    height: Theme.iconSize + Theme.spacingM
+                    radius: height / 2
                     color: Qt.rgba(0, 0, 0, 0.6)
                     opacity: thumbMouse.containsMouse ? 1 : 0.7
 
                     DankIcon {
                         anchors.centerIn: parent
                         name: "open_in_full"
-                        size: 20
+                        size: Theme.iconSize - 4
                         color: "#F2F2F2"
                     }
                 }
@@ -715,14 +716,14 @@ FocusScope {
             }
 
             Row {
-                spacing: 6
+                spacing: Theme.spacingS
                 Repeater {
                     model: view.selected && view.selected.colors !== "" ? view.selected.colors.split(",") : []
                     delegate: Rectangle {
                         required property string modelData
-                        width: 22
-                        height: 22
-                        radius: 11
+                        width: Theme.iconSize - 2
+                        height: Theme.iconSize - 2
+                        radius: height / 2
                         color: modelData
                         border.width: 1
                         border.color: Theme.withAlpha(Theme.surfaceText, 0.25)
@@ -732,14 +733,14 @@ FocusScope {
 
             Flow {
                 width: parent.width
-                spacing: 6
+                spacing: Theme.spacingS
                 Repeater {
                     model: view.detailFor === (view.selected ? view.selected.wid : "") && view.detail.tags ? view.detail.tags.slice(0, 12) : []
                     delegate: Rectangle {
                         required property string modelData
-                        height: 24
-                        width: tagLabel.implicitWidth + 16
-                        radius: 12
+                        height: Theme.iconSize
+                        width: tagLabel.implicitWidth + Theme.spacingL
+                        radius: height / 2
                         color: Theme.withAlpha(Theme.surfaceText, 0.10)
                         StyledText {
                             id: tagLabel
@@ -754,7 +755,7 @@ FocusScope {
 
             Item {
                 width: 1
-                height: 4
+                height: Theme.spacingXS
             }
 
             PillButton {
@@ -769,7 +770,7 @@ FocusScope {
             Column {
                 visible: !view.selectedInLibrary
                 width: parent.width
-                spacing: 10
+                spacing: Theme.spacingM
 
                 PillButton {
                     width: parent.width
@@ -802,7 +803,7 @@ FocusScope {
             Column {
                 visible: view.selectedInLibrary
                 width: parent.width
-                spacing: 10
+                spacing: Theme.spacingM
 
                 StyledText {
                     text: I18n.trFor("wallhavenCarousel", "Already in your folder.")
@@ -868,10 +869,10 @@ FocusScope {
         Item {
             id: stage
             anchors.fill: parent
-            anchors.topMargin: view.previewFill ? 0 : 32
-            anchors.leftMargin: view.previewFill ? 0 : 32
-            anchors.rightMargin: view.previewFill ? 0 : 32
-            anchors.bottomMargin: view.previewFill ? 0 : 170
+            anchors.topMargin: view.previewFill ? 0 : Theme.spacingL * 2
+            anchors.leftMargin: view.previewFill ? 0 : Theme.spacingL * 2
+            anchors.rightMargin: view.previewFill ? 0 : Theme.spacingL * 2
+            anchors.bottomMargin: view.previewFill ? 0 : previewControls.height + Theme.spacingXL * 2
             clip: true
 
             Item {
@@ -916,7 +917,7 @@ FocusScope {
         Rectangle {
             anchors.top: parent.top
             anchors.left: parent.left
-            height: 3
+            height: Theme.spacingXS
             width: parent.width * full.progress
             color: Theme.primary
             visible: full.status === Image.Loading
@@ -973,10 +974,11 @@ FocusScope {
         }
 
         Column {
+            id: previewControls
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 28
-            spacing: 10
+            anchors.bottomMargin: Theme.spacingXL
+            spacing: Theme.spacingM
 
             StyledText {
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -997,7 +999,7 @@ FocusScope {
 
             Row {
                 anchors.horizontalCenter: parent.horizontalCenter
-                spacing: 10
+                spacing: Theme.spacingM
 
                 PillButton {
                     visible: !view.selectedInLibrary

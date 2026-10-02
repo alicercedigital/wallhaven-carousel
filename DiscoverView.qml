@@ -489,11 +489,6 @@ FocusScope {
         cellWidth: Math.floor(width / cols)
         cellHeight: Math.round(cellWidth * 0.62)
 
-        onAtYEndChanged: if (atYEnd)
-            view.loadMore()
-        onCurrentIndexChanged: if (currentIndex >= results.count - 12)
-            view.loadMore()
-
         Keys.onPressed: event => {
             if (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))
                 return;

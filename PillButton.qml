@@ -1,6 +1,6 @@
 import QtQuick
 import qs.Common
-import qs.Widgets
+import qs.DCommon.Widgets
 
 // A pill-shaped button, made to sit on the overlay's dark backdrop.
 Rectangle {
@@ -35,7 +35,7 @@ Rectangle {
         anchors.centerIn: parent
         spacing: Theme.spacingS
 
-        DankIcon {
+        DIcon {
             visible: btn.icon !== ""
             name: btn.icon
             size: Theme.iconSize - 4

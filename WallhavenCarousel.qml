@@ -5,7 +5,7 @@ import Quickshell.Wayland
 import Qt.labs.folderlistmodel
 import qs.Common
 import qs.Services
-import qs.Widgets
+import qs.DCommon.Widgets
 import qs.Modules.Plugins
 
 // Wallhaven Carousel: a carousel of the wallpaper folder, with favorites,

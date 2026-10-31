@@ -1,6 +1,6 @@
 import QtQuick
 import qs.Common
-import qs.Widgets
+import qs.DCommon.Widgets
 
 // DMS's text field as a pill with a search icon. Escape, which the field
 // leaves alone, reaches this item and becomes `escaped`.
@@ -21,7 +21,7 @@ Item {
     implicitHeight: field.height
     Keys.onEscapePressed: box.escaped()
 
-    DankTextField {
+    DTextField {
         id: field
         width: parent.width
         anchors.verticalCenter: parent.verticalCenter

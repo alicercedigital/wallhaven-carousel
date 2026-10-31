@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell.Widgets
 import qs.Common
-import qs.Widgets
+import qs.DCommon.Widgets
 
 // The library: the folder's wallpapers in a skewed carousel.
 FocusScope {
@@ -499,7 +499,7 @@ FocusScope {
     }
 
     // ── Carousel ──────────────────────────────────────────────────────────
-    DankListView {
+    DListView {
         id: list
         anchors.left: parent.left
         anchors.right: parent.right
@@ -683,7 +683,7 @@ FocusScope {
                             color: card.isFavorite ? Theme.primary : Qt.rgba(0, 0, 0, 0.45)
                             visible: card.isFavorite || card.isCurrent || mouse.containsMouse
 
-                            DankIcon {
+                            DIcon {
                                 anchors.centerIn: parent
                                 name: "star"
                                 size: Theme.iconSize - 4
@@ -742,7 +742,7 @@ FocusScope {
         }
     }
 
-    // DankListView's wheel handler scrolls vertically and takes the event;
+    // DListView's wheel handler scrolls vertically and takes the event;
     // this layer above it gets the wheel first and steps the carousel.
     // Clicks and hover pass through to the cards.
     Item {

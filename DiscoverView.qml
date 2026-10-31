@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell.Widgets
 import qs.Common
-import qs.Widgets
+import qs.DCommon.Widgets
 
 // Adding wallpapers: a Wallhaven search (SFW, or Sketchy/NSFW with an API key). Picking one opens the
 // controls; downloading puts the file in the folder and, if asked, uses and
@@ -645,7 +645,7 @@ FocusScope {
     }
 
     // ── Results grid ──────────────────────────────────────────────────────
-    DankGridView {
+    DGridView {
         id: grid
         anchors.top: head.bottom
         anchors.topMargin: Theme.spacingL
@@ -783,7 +783,7 @@ FocusScope {
                         height: Theme.iconSize
                         radius: height / 2
                         color: Theme.primary
-                        DankIcon {
+                        DIcon {
                             anchors.centerIn: parent
                             name: "star"
                             filled: true
@@ -797,7 +797,7 @@ FocusScope {
                         height: Theme.iconSize
                         radius: height / 2
                         color: Qt.rgba(0, 0, 0, 0.6)
-                        DankIcon {
+                        DIcon {
                             anchors.centerIn: parent
                             name: cell.busy ? "downloading" : "check_circle"
                             size: Theme.iconSize - 6
@@ -881,7 +881,7 @@ FocusScope {
                     color: Qt.rgba(0, 0, 0, 0.6)
                     opacity: thumbMouse.containsMouse ? 1 : 0.7
 
-                    DankIcon {
+                    DIcon {
                         anchors.centerIn: parent
                         name: "open_in_full"
                         size: Theme.iconSize - 4

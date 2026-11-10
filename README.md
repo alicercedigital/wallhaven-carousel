@@ -118,7 +118,7 @@ In the carousel:
 | `A` | Wallhaven search |
 | `Esc` | Clear the search, then the filters, then close |
 
-In Wallhaven search, the arrow keys move through the results, `Space` opens the full-size preview, `/` jumps to the search field, `Enter`, `F` and `D` download as in the table above, and `Esc` goes back to the carousel.
+In Wallhaven search, the arrow keys move through the results, `Space` opens the full-size preview, `/` jumps to the search field, `Enter`, `F` and `D` download as in the table above, `PgDn` loads the next page of results, and `Esc` goes back to the carousel.
 
 ## IPC
 

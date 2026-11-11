@@ -494,6 +494,10 @@ FocusScope {
                         v: "toplist"
                     },
                     {
+                        label: I18n.trFor("wallhavenCarousel", "Hot"),
+                        v: "hot"
+                    },
+                    {
                         label: I18n.trFor("wallhavenCarousel", "Latest"),
                         v: "date_added"
                     },

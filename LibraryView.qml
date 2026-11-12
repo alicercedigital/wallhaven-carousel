@@ -16,6 +16,16 @@ FocusScope {
     readonly property int cardH: Math.max(220, Math.min(380, Math.floor(list.height / 1.25)))
     readonly property real skew: -0.28
     readonly property real skewPad: Math.abs(skew) * cardH / 2
+    // Every card holds the whole wallpaper at 16:9; the slanted frame shows
+    // a slice of it, and (on by default) the selected card opens up to show
+    // all of it.
+    readonly property int imgW: Math.round(cardH * 16 / 9)
+    readonly property bool wide: hub.wideSelected
+    readonly property int bigW: wide ? imgW - 2 * Math.round(skewPad) : cardW
+    // Card scale: at rest, selected, and the extra a hovered card gets.
+    readonly property real restScale: 0.84
+    readonly property real pickScale: 1.12
+    readonly property real hoverScale: 0.11
 
     property string searchText: ""
     property bool searching: false
@@ -146,13 +156,8 @@ FocusScope {
         rebuild();
     }
 
-    ListModel {
-        id: shown
-    }
-
-    // Puts `out` in the model. If only one item is gone (a delete), removes
-    // that row and the ListView keeps its position; replacing the whole model
-    // would reset it.
+    // Puts `out` in `entries` and says how it changed: "removed" (one item
+    // gone, a delete, so the carousel keeps its position), "same" or "reset".
     function sync(out) {
         if (out.length === entries.length - 1) {
             let i = 0;
@@ -167,18 +172,12 @@ FocusScope {
             }
             if (rest) {
                 entries = out;
-                shown.remove(i);
                 return "removed";
             }
         }
         if (out.length === entries.length && out.every((e, i) => e.name === entries[i].name))
             return "same";
         entries = out;
-        shown.clear();
-        for (const e of out)
-            shown.append({
-                fileName: e.name
-            });
         return "reset";
     }
 
@@ -499,24 +498,67 @@ FocusScope {
     }
 
     // ── Carousel ──────────────────────────────────────────────────────────
-    DListView {
+    FocusScope {
         id: list
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: filterBar.bottom
         anchors.bottom: bottomBar.top
-        orientation: ListView.Horizontal
-        flickableDirection: Flickable.HorizontalFlick
-        spacing: Theme.spacingS
-        model: shown
-        clip: false
-        cacheBuffer: view.cardW * 8
-        keyNavigationEnabled: false
-        highlightRangeMode: ListView.StrictlyEnforceRange
-        preferredHighlightBegin: width / 2 - view.cardW / 2
-        preferredHighlightEnd: width / 2 + view.cardW / 2
-        highlightMoveDuration: 220
         focus: true
+
+        property int currentIndex: -1
+        readonly property int count: view.entries.length
+        readonly property real spacing: Theme.spacingS
+        readonly property real step: view.cardW + spacing
+        readonly property real grow: view.bigW - view.cardW
+
+        // One animated position drives the row's scroll and every card's
+        // size together, so the resizing and the movement stay in step.
+        property real pos: 0
+        Behavior on pos {
+            id: posBehavior
+            NumberAnimation {
+                duration: 320
+                easing.type: Easing.OutCubic
+            }
+        }
+        onCurrentIndexChanged: pos = Math.max(currentIndex, 0)
+        onCountChanged: {
+            if (currentIndex >= count)
+                currentIndex = count - 1;
+            else if (currentIndex < 0 && count > 0)
+                currentIndex = 0;
+        }
+
+        function incrementCurrentIndex() {
+            if (currentIndex < count - 1)
+                currentIndex++;
+        }
+        function decrementCurrentIndex() {
+            if (currentIndex > 0)
+                currentIndex--;
+        }
+        // Jumps there without animating (opening, filtering).
+        function positionViewAtIndex(i, mode) {
+            posBehavior.enabled = false;
+            pos = Math.max(i, 0);
+            posBehavior.enabled = true;
+        }
+
+        // 0..1: how far card i is opened up (1 = the full 16:9 card).
+        function growth(i) {
+            return Math.max(0, 1 - Math.abs(i - pos));
+        }
+        // Left edge of card i: the slices before it, plus whatever part of
+        // the big card lies before it, shifted so the point between the two
+        // cards being morphed sits at the centre.
+        function cardX(i) {
+            const f = Math.floor(pos), t = pos - f;
+            const before = i <= f ? 0 : (i === f + 1 ? grow * (1 - t) : grow);
+            const cf = f * step + (view.cardW + grow * (1 - t)) / 2;
+            const cn = (f + 1) * step + grow * (1 - t) + (view.cardW + grow * t) / 2;
+            return width / 2 - (cf + (cn - cf) * t) + i * step + before;
+        }
 
         Keys.onPressed: event => {
             if (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))
@@ -600,151 +642,200 @@ FocusScope {
             }
         }
 
-        delegate: Item {
-            id: card
+        // Only enough cards to cover the screen, plus a margin, exist. They
+        // work like a ring: card k shows the entry in the window around
+        // `pos` whose index is k modulo `slots`, so when the row moves by one,
+        // only the card leaving one edge turns into the one entering the
+        // other. The cost doesn't grow with the folder.
+        readonly property int slots: Math.ceil(width / step) + 6
+        readonly property int base: Math.round(pos) - Math.floor(slots / 2)
 
-            required property int index
-            required property string fileName
+        Repeater {
+            model: list.slots
 
-            readonly property bool isCurrent: ListView.isCurrentItem
-            readonly property int dist: Math.abs(index - list.currentIndex)
-            readonly property bool isFavorite: !!view.hub.favoriteSet[fileName]
-            readonly property bool inUse: fileName === view.hub.currentName
+            delegate: Item {
+                id: card
 
-            width: view.cardW
-            height: list.height
+                required property int index
+                readonly property int idx: list.base + ((index - list.base) % list.slots + list.slots) % list.slots
+                readonly property string fileName: idx >= 0 && idx < view.entries.length ? view.entries[idx].name : ""
 
-            Item {
-                id: shape
-                width: view.cardW
-                height: view.cardH
-                anchors.centerIn: parent
-                scale: isCurrent ? 1.12 : (mouse.containsMouse ? 0.95 : 0.84)
-                opacity: isCurrent ? 1 : (mouse.containsMouse ? 0.95 : Math.max(0.3, 0.8 - dist * 0.12))
+                readonly property bool isCurrent: idx === list.currentIndex
+                readonly property real g: list.growth(idx)
+                readonly property real dist: Math.abs(idx - list.pos)
+                readonly property bool isFavorite: !!view.hub.favoriteSet[fileName]
+                readonly property bool inUse: fileName === view.hub.currentName
 
-                Behavior on scale {
+                // Grows to 16:9 when selected, shrinks back to a slice when left.
+                readonly property real cardWidth: view.cardW + list.grow * g
+                property real hover: mouse.containsMouse ? 1 : 0
+                Behavior on hover {
                     NumberAnimation {
                         duration: 200
                         easing.type: Easing.OutCubic
                     }
                 }
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: 200
-                    }
-                }
 
-                // Cuts the parallelogram: the rectangle is skewed, and its
-                // content skewed back so the picture stands upright.
-                transform: Matrix4x4 {
-                    matrix: Qt.matrix4x4(1, view.skew, 0, -view.skew * view.cardH / 2, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
-                }
+                x: list.cardX(idx)
+                z: g
+                width: cardWidth
+                height: list.height
+                // Stays visible while dragged, so the drag keeps its grab.
+                visible: fileName !== "" && (mouse.pressed || (x + width > -view.cardW && x < list.width + view.cardW))
 
                 Item {
-                    anchors.fill: parent
-                    clip: true
+                    id: shape
+                    width: card.cardWidth
+                    height: view.cardH
+                    anchors.centerIn: parent
+                    scale: view.restScale + (view.pickScale - view.restScale) * card.g + view.hoverScale * card.hover * (1 - card.g)
+                    opacity: Math.min(1, Math.max(0.3, 0.8 - card.dist * 0.12) + 0.2 * card.g + 0.15 * card.hover)
+
+                    // Cuts the parallelogram: the rectangle is skewed, and its
+                    // content skewed back so the picture stands upright.
+                    transform: Matrix4x4 {
+                        matrix: Qt.matrix4x4(1, view.skew, 0, -view.skew * view.cardH / 2, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
+                    }
 
                     Item {
-                        id: upright
-                        x: -view.skewPad
-                        width: view.cardW + 2 * view.skewPad
-                        height: view.cardH
-
-                        transform: Matrix4x4 {
-                            matrix: Qt.matrix4x4(1, -view.skew, 0, view.skew * view.cardH / 2, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
-                        }
-
-                        Rectangle {
-                            anchors.fill: parent
-                            color: Theme.surfaceContainer
-                        }
-
-                        // DMS's thumbnail cache (~/.cache/DankMaterialShell/imagecache):
-                        // the full image is decoded once, then a small PNG loads from
-                        // then on. Its own size (768) keeps it apart from DMS's
-                        // picker, which caches a different crop at 1024.
-                        CachingImage {
-                            anchors.fill: parent
-                            imagePath: view.hub.folder + "/" + card.fileName
-                            maxCacheSize: 768
-                            fillMode: Image.PreserveAspectCrop
-                            animate: false
-                        }
-
-                        // The star and the "in use" chip sit on the picture: dark with light
-                        // text on every theme, so they read over any wallpaper.
-                        Rectangle {
-                            id: star
-                            x: view.skewPad + view.cardW + Math.abs(view.skew) * (view.cardH / 2 - y - height) - width - Theme.spacingS
-                            y: Theme.spacingS
-                            width: Theme.iconSize + Theme.spacingS
-                            height: Theme.iconSize + Theme.spacingS
-                            radius: height / 2
-                            color: card.isFavorite ? Theme.primary : Qt.rgba(0, 0, 0, 0.45)
-                            visible: card.isFavorite || card.isCurrent || mouse.containsMouse
-
-                            DIcon {
-                                anchors.centerIn: parent
-                                name: "star"
-                                size: Theme.iconSize - 4
-                                filled: card.isFavorite
-                                color: card.isFavorite ? Theme.onPrimary : "#F2F2F2"
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: view.hub.toggleFavorite(card.fileName)
-                            }
-                        }
-
-                        Rectangle {
-                            x: view.skewPad + Math.abs(view.skew) * (view.cardH / 2 - y) + Theme.spacingS
-                            y: Theme.spacingS
-                            height: Theme.iconSize
-                            width: inUseLabel.implicitWidth + Theme.spacingL
-                            radius: height / 2
-                            color: Qt.rgba(0, 0, 0, 0.55)
-                            visible: card.inUse
-
-                            StyledText {
-                                id: inUseLabel
-                                anchors.centerIn: parent
-                                text: I18n.trFor("wallhavenCarousel", "in use")
-                                color: "#F2F2F2"
-                                font.pixelSize: Theme.fontSizeSmall
-                            }
-                        }
-                    }
-
-                    Rectangle {
                         anchors.fill: parent
-                        color: "transparent"
-                        border.width: card.isCurrent ? 3 : 0
-                        border.color: Theme.primary
-                    }
-                }
+                        clip: true
 
-                MouseArea {
-                    id: mouse
-                    anchors.fill: parent
-                    z: -1
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        if (card.isCurrent)
-                            view.applyCurrent();
-                        else
-                            list.currentIndex = card.index;
+                        Item {
+                            id: upright
+                            x: -view.skewPad
+                            width: card.cardWidth + 2 * view.skewPad
+                            height: view.cardH
+
+                            transform: Matrix4x4 {
+                                matrix: Qt.matrix4x4(1, -view.skew, 0, view.skew * view.cardH / 2, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
+                            }
+
+                            Rectangle {
+                                anchors.fill: parent
+                                color: Theme.surfaceContainer
+                            }
+
+                            // DMS's thumbnail cache (~/.cache/DankMaterialShell/imagecache):
+                            // the full image is decoded once, then a small PNG loads from
+                            // then on. Its own size (768) keeps it apart from DMS's
+                            // picker, which caches a different crop at 1024.
+                            // Fixed at full 16:9 and centred, so widening the card
+                            // reveals more of the picture instead of rescaling it.
+                            // The cache saves what this item shows, so it keeps the
+                            // whole wallpaper (1280 also keeps it apart from the
+                            // old slice-shaped 768 crops).
+                            CachingImage {
+                                x: (parent.width - width) / 2
+                                width: view.imgW
+                                height: view.cardH
+                                imagePath: card.fileName ? view.hub.folder + "/" + card.fileName : ""
+                                maxCacheSize: 1280
+                                fillMode: Image.PreserveAspectCrop
+                                animate: false
+                            }
+
+                            // The star and the "in use" chip sit on the picture: dark with light
+                            // text on every theme, so they read over any wallpaper.
+                            Rectangle {
+                                id: star
+                                x: view.skewPad + card.cardWidth + Math.abs(view.skew) * (view.cardH / 2 - y - height) - width - Theme.spacingS
+                                y: Theme.spacingS
+                                width: Theme.iconSize + Theme.spacingS
+                                height: Theme.iconSize + Theme.spacingS
+                                radius: height / 2
+                                color: card.isFavorite ? Theme.primary : Qt.rgba(0, 0, 0, 0.45)
+                                visible: card.isFavorite || card.isCurrent || mouse.containsMouse
+
+                                DIcon {
+                                    anchors.centerIn: parent
+                                    name: "star"
+                                    size: Theme.iconSize - 4
+                                    filled: card.isFavorite
+                                    color: card.isFavorite ? Theme.onPrimary : "#F2F2F2"
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: view.hub.toggleFavorite(card.fileName)
+                                }
+                            }
+
+                            Rectangle {
+                                x: view.skewPad + Math.abs(view.skew) * (view.cardH / 2 - y) + Theme.spacingS
+                                y: Theme.spacingS
+                                height: Theme.iconSize
+                                width: inUseLabel.implicitWidth + Theme.spacingL
+                                radius: height / 2
+                                color: Qt.rgba(0, 0, 0, 0.55)
+                                visible: card.inUse
+
+                                StyledText {
+                                    id: inUseLabel
+                                    anchors.centerIn: parent
+                                    text: I18n.trFor("wallhavenCarousel", "in use")
+                                    color: "#F2F2F2"
+                                    font.pixelSize: Theme.fontSizeSmall
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            anchors.fill: parent
+                            color: "transparent"
+                            border.width: card.isCurrent ? 3 : 0
+                            border.color: Theme.primary
+                        }
+                    }
+
+                    MouseArea {
+                        id: mouse
+                        anchors.fill: parent
+                        z: -1
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+
+                        // Dragging steps one card per card width; a drag is
+                        // not a click. Measured in the row's coordinates,
+                        // since this card moves while it is dragged.
+                        property real startX: 0
+                        property real used: 0
+                        property bool dragged: false
+                        onPressed: m => {
+                            startX = mapToItem(list, m.x, m.y).x;
+                            used = 0;
+                            dragged = false;
+                        }
+                        onPositionChanged: m => {
+                            if (!pressed)
+                                return;
+                            const dx = mapToItem(list, m.x, m.y).x - startX - used;
+                            if (!dragged && Math.abs(dx) < Qt.styleHints.startDragDistance)
+                                return;
+                            dragged = true;
+                            const n = Math.trunc(dx / list.step);
+                            if (n === 0)
+                                return;
+                            used += n * list.step;
+                            list.currentIndex = Math.max(0, Math.min(list.count - 1, list.currentIndex - n));
+                        }
+                        onClicked: {
+                            if (dragged)
+                                return;
+                            if (card.isCurrent)
+                                view.applyCurrent();
+                            else
+                                list.currentIndex = card.idx;
+                        }
                     }
                 }
             }
         }
     }
 
-    // DListView's wheel handler scrolls vertically and takes the event;
-    // this layer above it gets the wheel first and steps the carousel.
-    // Clicks and hover pass through to the cards.
+    // This layer above the cards steps the carousel on the wheel. Clicks
+    // and hover pass through to the cards.
     Item {
         anchors.fill: list
 

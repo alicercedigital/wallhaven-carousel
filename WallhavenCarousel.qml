@@ -361,6 +361,7 @@ PluginComponent {
     // DMS's timer cycles through every file in the folder. While this one is
     // on, DMS's is off (and comes back as it was when this is turned off).
     readonly property bool favoritesRandom: !!pluginData?.favoritesRandom
+    readonly property bool wideSelected: pluginData?.wideSelected ?? true
     readonly property int favoritesIntervalMin: parseInt(pluginData?.favoritesInterval) || 60
     property bool _changingCycling: false
 

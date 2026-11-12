@@ -36,6 +36,13 @@ PluginSettings {
         placeholder: ""
     }
 
+    ToggleSetting {
+        settingKey: "roundedCorners"
+        label: I18n.trFor("wallhavenCarousel", "Rounded corners")
+        description: I18n.trFor("wallhavenCarousel", "Rounds the wallpaper cards to match DMS's corner radius.")
+        defaultValue: true
+    }
+
     SelectionSetting {
         settingKey: "favoritesInterval"
         label: I18n.trFor("wallhavenCarousel", "Shuffle favorites every")

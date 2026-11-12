@@ -36,6 +36,13 @@ PluginSettings {
         placeholder: ""
     }
 
+    ToggleSetting {
+        settingKey: "wideSelected"
+        label: I18n.trFor("wallhavenCarousel", "Widen the selected card")
+        description: I18n.trFor("wallhavenCarousel", "The centered card opens up to show the whole wallpaper at 16:9.")
+        defaultValue: true
+    }
+
     SelectionSetting {
         settingKey: "favoritesInterval"
         label: I18n.trFor("wallhavenCarousel", "Shuffle favorites every")

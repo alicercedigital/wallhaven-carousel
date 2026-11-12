@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 import Quickshell.Widgets
 import qs.Common
 import qs.DCommon.Widgets
@@ -16,6 +17,8 @@ FocusScope {
     readonly property int cardH: Math.max(220, Math.min(380, Math.floor(list.height / 1.25)))
     readonly property real skew: -0.28
     readonly property real skewPad: Math.abs(skew) * cardH / 2
+    // Follows DMS's shape setting (Material "large" corners), off in settings.
+    readonly property real cardRadius: hub.roundedCorners ? Theme.cornerRadiusL : 0
 
     property string searchText: ""
     property bool searching: false
@@ -640,9 +643,32 @@ FocusScope {
                     matrix: Qt.matrix4x4(1, view.skew, 0, -view.skew * view.cardH / 2, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
                 }
 
+                // Rounded corners: the card is masked by a rounded rectangle
+                // before the skew, so the corners slant with the card.
+                Item {
+                    id: cardMask
+                    anchors.fill: parent
+                    visible: false
+                    layer.enabled: view.cardRadius > 0
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: view.cardRadius
+                        color: "black"
+                    }
+                }
+
                 Item {
                     anchors.fill: parent
                     clip: true
+                    layer.enabled: view.cardRadius > 0
+                    layer.smooth: true
+                    layer.effect: MultiEffect {
+                        maskEnabled: true
+                        maskSource: cardMask
+                        maskThresholdMin: 0.5
+                        maskSpreadAtMin: 1
+                    }
 
                     Item {
                         id: upright
@@ -720,6 +746,7 @@ FocusScope {
                     Rectangle {
                         anchors.fill: parent
                         color: "transparent"
+                        radius: view.cardRadius
                         border.width: card.isCurrent ? 3 : 0
                         border.color: Theme.primary
                     }

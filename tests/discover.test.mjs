@@ -75,3 +75,82 @@ test('failed previews are not cached and can be retried', () => {
     assert.equal(state.isCached('2'), true);
     assert.equal(state.fullSource(state.results.get(2)), 'file:///cache/preview/wallhaven-2.jpg');
 });
+
+test('wallhavenPageUrl is the public Wallhaven page for an id', () => {
+    const { state } = discovery();
+    assert.equal(state.wallhavenPageUrl('abc12'), 'https://wallhaven.cc/w/abc12');
+});
+
+test('openWallhavenPage opens the Wallhaven page then closes the overlay', () => {
+    const opened = [];
+    let closed = 0;
+    const { state } = discovery({
+        selected: { wid: 'abc12' },
+        Qt: {
+            openUrlExternally: url => {
+                opened.push(url);
+                return true;
+            },
+        },
+    });
+    state.hub.close = () => {
+        closed += 1;
+    };
+    assert.equal(state.openWallhavenPage(), true);
+    assert.deepEqual(opened, ['https://wallhaven.cc/w/abc12']);
+    assert.equal(closed, 1);
+});
+
+test('openWallhavenPage does nothing with no selection', () => {
+    const opened = [];
+    let closed = 0;
+    const { state } = discovery({
+        selected: null,
+        Qt: {
+            openUrlExternally: url => {
+                opened.push(url);
+                return true;
+            },
+        },
+    });
+    state.hub.close = () => {
+        closed += 1;
+    };
+    assert.equal(state.openWallhavenPage(), false);
+    assert.deepEqual(opened, []);
+    assert.equal(closed, 0);
+});
+
+test('openWallhavenPage leaves the overlay open when open fails', () => {
+    let closed = 0;
+    const { state } = discovery({
+        selected: { wid: 'abc12' },
+        Qt: { openUrlExternally: () => false },
+    });
+    state.hub.close = () => {
+        closed += 1;
+    };
+    assert.equal(state.openWallhavenPage(), false);
+    assert.equal(closed, 0);
+});
+
+test('act O opens the Wallhaven page', () => {
+    const opened = [];
+    let closed = 0;
+    const { state } = discovery({
+        selected: { wid: 'zz9' },
+        Qt: {
+            Key_O: 79,
+            openUrlExternally: url => {
+                opened.push(url);
+                return true;
+            },
+        },
+    });
+    state.hub.close = () => {
+        closed += 1;
+    };
+    assert.equal(state.act(79), true);
+    assert.deepEqual(opened, ['https://wallhaven.cc/w/zz9']);
+    assert.equal(closed, 1);
+});

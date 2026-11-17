@@ -316,5 +316,11 @@
   },
   "The centered card opens up to show the whole wallpaper at 16:9.": {
     "The centered card opens up to show the whole wallpaper at 16:9.": "O card central se abre e mostra o papel de parede inteiro em 16:9."
+  },
+  "Rounded corners": {
+    "Rounded corners": "Cantos arredondados"
+  },
+  "Rounds the wallpaper cards to match DMS's corner radius.": {
+    "Rounds the wallpaper cards to match DMS's corner radius.": "Arredonda os cards dos papéis de parede no mesmo raio de canto do DMS."
   }
 }

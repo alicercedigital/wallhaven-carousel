@@ -683,6 +683,7 @@ FocusScope {
                     anchors.horizontalCenter: parent.horizontalCenter
                     icon: view.errorText !== "" ? "refresh" : "expand_more"
                     label: view.loading ? I18n.trFor("wallhavenCarousel", "Loading…") : view.errorText !== "" ? I18n.trFor("wallhavenCarousel", "Try again") : I18n.trFor("wallhavenCarousel", "Load more")
+                    hint: "PgDn"
                     busy: view.loading
                     onClicked: view.loadMore()
                 }
@@ -706,6 +707,9 @@ FocusScope {
                 break;
             case Qt.Key_Space:
                 view.openPreview();
+                break;
+            case Qt.Key_PageDown:
+                view.loadMore();
                 break;
             case Qt.Key_Slash:
                 searchBox.focusInput();
@@ -1174,6 +1178,9 @@ FocusScope {
                 case Qt.Key_Right:
                 case Qt.Key_L:
                     view.step(1);
+                    break;
+                case Qt.Key_PageDown:
+                    view.loadMore();
                     break;
                 case Qt.Key_Tab:
                     view.previewFill = !view.previewFill;

@@ -23,6 +23,8 @@ a shuffle that only picks favorites, and Wallhaven search, full-size preview and
 
 Press your key and every wallpaper in the folder lines up in a skewed carousel. Click a card, scroll the wheel or use the arrow keys (`h` and `l` work too). `Enter`, or a click on the centered card, sets it as your wallpaper.
 
+The centered card opens up to show the whole wallpaper at 16:9, and the row slides and resizes in one motion. It can be turned off in the [settings](#settings).
+
 The wallpaper you are using carries an "in use" badge, and the carousel opens centered on it. If DMS changes your wallpaper on a timer, the header counts down to the next change, and picking one by hand restarts that interval.
 
 The cards use DMS's thumbnail cache at `~/.cache/DankMaterialShell/imagecache`. After a card is cached, reopening the carousel loads its thumbnail instead of decoding the full wallpaper again.
@@ -137,6 +139,7 @@ dms ipc call wallhavenCarousel favoritesRandom on|off|toggle  # the favorites sh
 In Settings → Plugins → Wallhaven Carousel:
 
 - **Wallpaper folder.** Left empty, the plugin uses the folder DMS cycles through, or else the folder of the current wallpaper. `~` works.
+- **Widen the selected card.** On by default. The centered card opens up to show the whole wallpaper at 16:9. Off, every card stays a narrow slice and the centered one is just scaled up.
 - **Shuffle favorites every.** 5, 15 or 30 minutes, or 1, 3 or 6 hours.
 - **Wallhaven API key.** Optional, from [wallhaven.cc/settings/account](https://wallhaven.cc/settings/account). It unlocks the Sketchy and NSFW filters and is stored in plain text in `plugin_settings.json`.
 
